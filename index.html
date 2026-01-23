@@ -10,8 +10,9 @@
     <style>
         body { 
           font-family: 'Inter', sans-serif; 
-          overflow: hidden;
-          background-color: #FDFDFD;
+          background-color: #F0FDF4; /* Verde esmeralda bem clarinho */
+          min-height: 100vh;
+          -webkit-tap-highlight-color: transparent;
         }
         
         @media print {
@@ -31,11 +32,16 @@
 
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f0fdf4; }
-        ::-webkit-scrollbar-thumb { background: #86efac; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #4ade80; }
+        ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #059669; }
 
         .sst-table-row:nth-child(even) {
-          background-color: rgba(240, 253, 244, 0.4);
+          background-color: rgba(16, 185, 129, 0.05);
+        }
+
+        /* Melhoria de touch no mobile */
+        input, select, button {
+          touch-action: manipulation;
         }
     </style>
 <script type="importmap">

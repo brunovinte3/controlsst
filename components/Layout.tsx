@@ -16,6 +16,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   const isAdmin = userRole === 'admin';
   const [config, setConfig] = useState<{company: CompanyProfile, admin: AdminProfile} | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const hasSheetsUrl = !!StorageService.getSheetsUrl();
 
   useEffect(() => {
@@ -29,6 +30,11 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
       onRefreshData();
     }
     setIsSyncing(false);
+  };
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setIsMobileMenuOpen(false);
   };
 
   if (!config) return null;
@@ -45,11 +51,37 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   const visibleTabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-[#FDFDFD]">
-      <nav className="w-full md:w-80 bg-[#064E3B] text-white flex flex-col no-print shadow-2xl z-50">
-        {/* LOGO IDENTICA AO LOGIN */}
+    <div className="min-h-screen flex flex-col md:flex-row bg-[#F0FDF4]">
+      {/* Barra Superior Mobile */}
+      <div className="md:hidden flex items-center justify-between p-4 bg-[#064E3B] text-white no-print sticky top-0 z-[110] shadow-lg">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center text-lg shadow-lg">⛑️</div>
+          <span className="font-black italic tracking-tighter">ControlSST</span>
+        </div>
+        <button 
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="p-3 bg-emerald-700 rounded-xl active:scale-90 transition-transform"
+        >
+          {isMobileMenuOpen ? '✕' : '☰'}
+        </button>
+      </div>
+
+      {/* Sidebar Overlay Mobile */}
+      {isMobileMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <nav className={`
+        fixed inset-y-0 left-0 z-[105] w-72 md:relative md:w-80 bg-[#064E3B] text-white flex flex-col no-print shadow-2xl transition-transform duration-300
+        ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+      `}>
+        {/* LOGO */}
         <div className="p-10 border-b border-green-800/50">
-          <header className="flex flex-col items-center md:items-start">
+          <header className="flex flex-col items-start">
             <div className="relative w-16 h-16 mb-4">
               <div className="absolute inset-0 bg-orange-500 rounded-2xl shadow-lg rotate-3 opacity-20"></div>
               <div className="relative w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center text-3xl shadow-xl border-b-2 border-orange-600">
@@ -67,11 +99,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
           </header>
         </div>
 
-        <div className="flex-1 py-8 px-4 space-y-2 overflow-y-auto">
+        {/* Links */}
+        <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
           {visibleTabs.map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 transition-all duration-300 group ${
                 activeTab === tab.id 
                   ? 'bg-emerald-600 shadow-xl font-bold scale-[1.02]' 
@@ -87,7 +120,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
             <button
               onClick={handleSync}
               disabled={isSyncing}
-              className={`w-full text-left px-5 py-4 mt-8 rounded-2xl flex items-center gap-4 transition-all border-2 border-emerald-500/30 bg-emerald-900/20 hover:bg-emerald-500 hover:text-white ${isSyncing ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`w-full text-left px-5 py-4 mt-8 rounded-2xl flex items-center gap-4 transition-all border-2 border-emerald-500/30 bg-emerald-900/20 hover:bg-emerald-500 hover:text-white ${isSyncing ? 'animate-pulse' : ''}`}
             >
               <span className={`text-xl ${isSyncing ? 'animate-spin' : ''}`}>🔄</span>
               <span className="text-sm tracking-wide uppercase font-black text-[10px]">
@@ -97,9 +130,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
           )}
         </div>
 
-        <div className="p-6 border-t border-green-800/50 space-y-4">
+        {/* Footer Sidebar */}
+        <div className="p-6 border-t border-green-800/50 space-y-4 bg-green-950/20">
           <div className="bg-green-900/40 p-4 rounded-3xl border border-green-700/30 flex items-center gap-4">
-            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-xl">
+            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-emerald-900/40">
               {isAdmin ? config.admin.icon : '👀'}
             </div>
             <div className="flex-1 overflow-hidden">
@@ -114,15 +148,16 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
           
           <button 
             onClick={onLogout} 
-            className="w-full py-4 bg-red-500/10 hover:bg-red-50 text-red-500 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20 flex items-center justify-center gap-2 group active:scale-95"
           >
-            Sair do Painel 🚪
+            <span>SAIR DO SISTEMA</span>
+            <span className="group-hover:translate-x-1 transition-transform">🚪</span>
           </button>
         </div>
       </nav>
 
-      <main className="flex-1 overflow-y-auto h-screen scroll-smooth flex flex-col bg-[#FDFDFD]">
-        <div className="flex-1 p-6 md:p-12 max-w-7xl mx-auto w-full">
+      <main className="flex-1 overflow-x-hidden h-screen flex flex-col relative z-0">
+        <div className="flex-1 p-4 md:p-12 max-w-7xl mx-auto w-full">
           {children}
         </div>
       </main>

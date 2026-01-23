@@ -46,10 +46,10 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
   if (!appConfig) return null;
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center p-6 font-['Inter']">
-      <div className="w-full max-w-md bg-white rounded-[3.5rem] shadow-2xl overflow-hidden border border-gray-100 animate-fadeIn relative">
+    <div className="min-h-screen bg-[#F0FDF4] flex items-center justify-center p-6 font-['Inter']">
+      <div className="w-full max-w-md bg-white rounded-[3.5rem] shadow-[0_30px_60px_-15px_rgba(6,78,59,0.3)] overflow-hidden border border-emerald-100 animate-fadeIn relative">
         
-        <div className="p-12">
+        <div className="p-10 md:p-12">
           <header className="text-center mb-10">
             <div className="relative w-24 h-24 mx-auto mb-6">
               <div className="absolute inset-0 bg-orange-500 rounded-3xl shadow-xl shadow-orange-900/20 rotate-3 animate-pulse opacity-20"></div>
@@ -62,16 +62,16 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
               <span className="text-[#064E3B]">Control</span>
               <span className="text-emerald-500">SST</span>
             </h1>
-            <p className="text-[10px] text-gray-400 font-black uppercase tracking-[0.25em] mt-3">Gestão Profissional de SST</p>
+            <p className="text-[10px] text-emerald-800/40 font-black uppercase tracking-[0.25em] mt-3">Gestão Profissional de SST</p>
           </header>
 
           {mode === 'login' ? (
             <form onSubmit={handleAdminLogin} className="space-y-6">
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuário Administrador</label>
+                <label className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest ml-1 italic">Usuário Administrador</label>
                 <input 
                   type="text" 
-                  className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 pl-6 font-bold text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner"
+                  className="w-full bg-emerald-50/50 border-2 border-transparent rounded-2xl p-4 pl-6 font-bold text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner"
                   placeholder="Nome de usuário"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -79,10 +79,10 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Senha de Acesso</label>
+                <label className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest ml-1 italic">Senha de Acesso</label>
                 <input 
                   type="password" 
-                  className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 pl-6 font-bold text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner"
+                  className="w-full bg-emerald-50/50 border-2 border-transparent rounded-2xl p-4 pl-6 font-bold text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner"
                   placeholder="••••••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -93,7 +93,7 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
 
               <button 
                 type="submit"
-                className="w-full py-5 bg-[#064E3B] text-emerald-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] transition-all"
+                className="w-full py-5 bg-[#064E3B] text-emerald-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-95 transition-all shadow-emerald-900/20"
               >
                 Acessar Painel ⚡
               </button>
@@ -102,14 +102,18 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
                 <button 
                   type="button"
                   onClick={() => setMode('forgot')}
-                  className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-emerald-600 transition-colors"
+                  className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest hover:text-emerald-600 transition-colors"
                 >
                   Esqueci minha senha
                 </button>
+                <div className="relative py-2">
+                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-emerald-100"></div></div>
+                   <div className="relative flex justify-center text-[8px] uppercase font-black text-emerald-800/20"><span className="bg-white px-2 tracking-widest italic">OU</span></div>
+                </div>
                 <button 
                   type="button"
                   onClick={() => onLogin('visitor')}
-                  className="w-full py-5 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-orange-600 shadow-xl"
+                  className="w-full py-5 bg-orange-500 text-white rounded-2xl font-black text-xs uppercase tracking-[0.2em] hover:bg-orange-600 shadow-xl shadow-orange-900/10 active:scale-95 transition-transform"
                 >
                   Acesso de Consulta 👁️
                 </button>
@@ -118,8 +122,8 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
           ) : (
             <form onSubmit={handleForgot} className="space-y-6 animate-fadeIn">
               <div className="text-center mb-6">
-                <h3 className="text-lg font-black text-gray-800 tracking-tight">Recuperar Acesso</h3>
-                <p className="text-[11px] text-gray-500 font-medium italic">As instruções serão enviadas para o e-mail de segurança.</p>
+                <h3 className="text-lg font-black text-emerald-900 tracking-tight">Recuperar Acesso</h3>
+                <p className="text-[11px] text-emerald-800/60 font-medium italic">As instruções serão enviadas para o e-mail de segurança.</p>
               </div>
               {success ? (
                 <div className="bg-emerald-50 p-6 rounded-3xl border border-emerald-100 text-center">
@@ -128,11 +132,11 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
               ) : (
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">E-mail Administrativo</label>
+                    <label className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest ml-1 italic">E-mail Administrativo</label>
                     <input 
                       required
                       type="email" 
-                      className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm outline-none focus:bg-white focus:border-emerald-500"
+                      className="w-full bg-emerald-50/50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm outline-none focus:bg-white focus:border-emerald-500"
                       placeholder="brunosilva1232014@gmail.com"
                     />
                   </div>
@@ -145,7 +149,7 @@ const AuthView: React.FC<AuthViewProps> = ({ onLogin }) => {
                   <button 
                     type="button"
                     onClick={() => setMode('login')}
-                    className="w-full py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest"
+                    className="w-full py-2 text-[10px] font-black text-emerald-800/40 uppercase tracking-widest hover:text-emerald-600 transition-colors"
                   >
                     Voltar para o Login
                   </button>
