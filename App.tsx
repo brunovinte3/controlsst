@@ -19,9 +19,10 @@ const App: React.FC = () => {
 
   const isAdmin = userRole === 'admin';
 
-  const loadData = async () => {
+  const loadData = async (forceSync = false) => {
     setIsLoading(true);
     try {
+      // Sempre tenta buscar os dados mais recentes (Sheets -> Supabase)
       const data = await StorageService.getEmployees();
       setEmployees(data);
     } catch (error) {
@@ -34,12 +35,6 @@ const App: React.FC = () => {
   useEffect(() => {
     if (userRole) {
       loadData();
-      // Auto-sync ao abrir se tiver URL configurada
-      if (isAdmin && StorageService.getSheetsUrl()) {
-        StorageService.syncWithSheets().then(success => {
-          if (success) loadData();
-        });
-      }
     }
   }, [userRole]);
 
@@ -47,11 +42,14 @@ const App: React.FC = () => {
     if (!isAdmin) return;
     setIsLoading(true);
     try {
+      // No modo importação manual, tentamos salvar no Supabase
       await StorageService.saveEmployees(data);
-      await loadData();
+      setEmployees(data);
       setActiveTab('dashboard');
     } catch (error) {
-      alert("Erro ao salvar dados.");
+      console.warn("Erro ao salvar importação no Supabase, mantendo em memória.");
+      setEmployees(data);
+      setActiveTab('dashboard');
     } finally {
       setIsLoading(false);
     }
@@ -65,8 +63,8 @@ const App: React.FC = () => {
     if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-          <div className="w-12 h-12 border-4 border-green-100 border-t-green-600 rounded-full animate-spin"></div>
-          <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">Acessando Nuvem SST...</p>
+          <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
+          <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest italic">Sincronizando com Google Sheets...</p>
         </div>
       );
     }
@@ -76,23 +74,7 @@ const App: React.FC = () => {
       case 'employees': return <EmployeeView employees={employees} onUpdate={loadData} isAdmin={isAdmin} />;
       case 'reports': return <Reports employees={employees} />;
       case 'matrix': return <MatrixView />;
-      case 'import': return isAdmin ? (
-        <div className="space-y-10">
-           <ImportData onImport={handleImport} />
-           <div className="max-w-6xl mx-auto bg-white p-8 rounded-[2.5rem] border border-gray-100 flex items-center justify-between shadow-sm">
-             <div>
-                <h4 className="font-black text-gray-800">Cópia de Segurança (Backup)</h4>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Baixe todos os dados locais do navegador</p>
-             </div>
-             <button 
-                onClick={() => StorageService.downloadBackup()}
-                className="bg-blue-50 text-blue-600 px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-100 transition-all"
-             >
-                Baixar Arquivo .JSON 💾
-             </button>
-           </div>
-        </div>
-      ) : null;
+      case 'import': return isAdmin ? <ImportData onImport={handleImport} /> : null;
       case 'config': return isAdmin ? <ConfigView onUpdate={loadData} /> : null;
       default: return <Dashboard employees={employees} isAdmin={isAdmin} />;
     }
@@ -104,7 +86,7 @@ const App: React.FC = () => {
       setActiveTab={setActiveTab} 
       userRole={userRole} 
       onLogout={() => setUserRole(null)}
-      onRefreshData={loadData}
+      onRefreshData={() => loadData(true)}
     >
       {renderContent()}
     </Layout>
