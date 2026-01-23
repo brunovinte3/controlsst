@@ -3,6 +3,8 @@ import { Employee, AdminProfile, CompanyProfile, TrainingPhoto } from '../types'
 import { supabase } from './supabase';
 import { formatEmployeeData } from '../utils/calculations';
 
+const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyazZ7cte9PaYLtBnlPNm62UvRjzRttAQsWxsb0vaQI6J_jZ37lgwJ4lxsFp5Do8M8c/exec';
+
 const DEFAULT_ADMIN: AdminProfile = {
   username: 'Bruno',
   password: '#Bruno91218175',
@@ -45,9 +47,14 @@ export const StorageService = {
   },
 
   async getEmployees(): Promise<Employee[]> {
-    const { data, error } = await supabase.from('employees').select('*').order('name');
-    if (error) return [];
-    return (data || []).map(item => ({ ...item, trainings: item.trainings || {} }));
+    try {
+      const { data, error } = await supabase.from('employees').select('*').order('name');
+      if (error) throw error;
+      return (data || []).map(item => ({ ...item, trainings: item.trainings || {} }));
+    } catch (e) {
+      console.error("Erro Supabase:", e);
+      return [];
+    }
   },
 
   async saveEmployees(employees: Employee[]): Promise<void> {
@@ -65,41 +72,42 @@ export const StorageService = {
     if (!url) return false;
 
     try {
-      // Usando redirect: 'follow' explicitamente para lidar com o redirecionamento do Google Apps Script
+      // Otimização crucial: credentials 'omit' e redirect 'follow' para Google Apps Script
       const response = await fetch(url, { 
         method: 'GET',
         mode: 'cors',
-        cache: 'no-store',
-        redirect: 'follow' 
+        credentials: 'omit',
+        redirect: 'follow'
       });
 
       if (!response.ok) {
-        throw new Error(`Erro HTTP: ${response.status}`);
+        throw new Error(`Erro do servidor Google: ${response.status}`);
       }
 
       const data = await response.json();
       
       if (data && Array.isArray(data)) {
         const formatted = formatEmployeeData(data);
-        await this.saveEmployees(formatted);
-        return true;
+        if (formatted.length > 0) {
+          await this.saveEmployees(formatted);
+          return true;
+        }
       }
       
       if (data && data.error) {
-        console.error("Erro no Script do Google:", data.error);
+        console.error("Erro no Script:", data.error);
         return false;
       }
 
       return false;
-    } catch (e) {
-      console.error("Falha Crítica na Sincronização:", e);
-      // Re-lança o erro para que a UI possa mostrar a mensagem específica de "Failed to fetch"
+    } catch (e: any) {
+      console.error("Falha na sincronização com Google Sheets:", e.message);
       throw e;
     }
   },
 
-  getSheetsUrl(): string | null {
-    return localStorage.getItem('google_sheets_url');
+  getSheetsUrl(): string {
+    return localStorage.getItem('google_sheets_url') || DEFAULT_SHEETS_URL;
   },
 
   saveSheetsUrl(url: string): void {

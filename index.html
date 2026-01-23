@@ -11,19 +11,13 @@
         body { 
           font-family: 'Inter', sans-serif; 
           overflow: hidden;
+          background-color: #FDFDFD;
         }
         
         @media print {
             .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { overflow: visible !important; background: white !important; }
-            @page {
-              margin: 1.5cm;
-              counter-increment: page;
-            }
-            .page-number:after {
-              content: counter(page);
-            }
         }
 
         @keyframes fadeIn {
@@ -35,19 +29,10 @@
           animation: fadeIn 0.5s ease-out forwards;
         }
 
-        ::-webkit-scrollbar {
-          width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-          background: #f0fdf4;
-        }
-        ::-webkit-scrollbar-thumb {
-          background: #86efac;
-          border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-          background: #4ade80;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f0fdf4; }
+        ::-webkit-scrollbar-thumb { background: #86efac; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #4ade80; }
 
         .sst-table-row:nth-child(even) {
           background-color: rgba(240, 253, 244, 0.4);
@@ -67,7 +52,7 @@
 }
 </script>
 </head>
-<body class="bg-[#FDFDFD] text-gray-900">
+<body class="text-gray-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
