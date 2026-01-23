@@ -24,10 +24,8 @@ export const StorageService = {
     try {
       const { data, error } = await supabase.from('app_settings').select('*');
       if (error) return { company: DEFAULT_COMPANY, admin: DEFAULT_ADMIN };
-      
       const company = data?.find(i => i.key === 'company_profile')?.value || DEFAULT_COMPANY;
       const admin = data?.find(i => i.key === 'admin_profile')?.value || DEFAULT_ADMIN;
-      
       return { company, admin };
     } catch (e) {
       return { company: DEFAULT_COMPANY, admin: DEFAULT_ADMIN };
@@ -59,28 +57,23 @@ export const StorageService = {
       }
       return (data || []).map(item => ({ ...item, trainings: item.trainings || {} }));
     } catch (e) {
-      console.error("Erro Supabase:", e);
       return [];
     }
   },
 
   async saveEmployees(employees: Employee[]): Promise<void> {
     if (!employees.length) return;
-
     try {
       const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
-      
       if (error && error.message.includes('company')) {
         const cleanEmployees = employees.map(({ company, ...rest }) => rest);
         const { error: retryError } = await supabase.from('employees').upsert(cleanEmployees, { onConflict: 'id' });
         if (retryError) throw retryError;
         return;
       }
-      
       if (error) throw error;
     } catch (err: any) {
-      console.error("Erro ao salvar no Supabase:", err.message);
-      throw new Error(`Erro no Banco de Dados: ${err.message}`);
+      throw new Error(`Erro no Banco: ${err.message}`);
     }
   },
 
@@ -92,48 +85,41 @@ export const StorageService = {
     const url = this.getSheetsUrl();
     if (!url) return false;
 
-    console.log("Iniciando fetch para:", url);
-
     try {
+      // Simplificamos o fetch removendo headers que disparam Pre-flight CORS (OPTIONS)
+      // O Google Apps Script exige redirect: follow
       const response = await fetch(url, { 
         method: 'GET',
-        mode: 'cors',
-        credentials: 'omit',
         redirect: 'follow',
-        headers: {
-          'Accept': 'application/json'
-        }
+        mode: 'cors'
       });
 
       if (!response.ok) {
-        throw new Error(`Google retornou status ${response.status} (${response.statusText})`);
+        throw new Error(`Google Error: ${response.status}`);
       }
 
-      const textData = await response.text();
+      const text = await response.text();
       let data;
       
       try {
-        data = JSON.parse(textData);
-      } catch (parseError) {
-        console.error("Resposta do Google não é JSON:", textData.substring(0, 200));
-        throw new Error("O link do Google não retornou um JSON válido. Verifique se o script está publicado como Web App.");
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Conteúdo recebido não é JSON:", text.substring(0, 100));
+        throw new Error("O Google retornou uma página HTML em vez de dados. Verifique se o Script foi publicado como 'Qualquer um' e não 'Qualquer um com conta Google'.");
       }
       
-      if (data && Array.isArray(data)) {
+      if (Array.isArray(data)) {
         const formatted = formatEmployeeData(data);
         if (formatted.length > 0) {
           await this.saveEmployees(formatted);
           return true;
         }
-      } else if (data && data.error) {
-        throw new Error(`Erro no Script do Google: ${data.error}`);
       }
-      
       return false;
     } catch (e: any) {
-      console.error("Falha detalhada na sincronização:", e);
+      console.error("Erro na Sincronização:", e);
       if (e.message === 'Failed to fetch') {
-        throw new Error("Falha de rede (CORS). Certifique-se que o script está implantado como 'Qualquer um' e use o link que termina em /exec.");
+        throw new Error("CORS Block: O navegador impediu a conexão. Certifique-se de que o seu script doGet() retorna ContentService.MimeType.JSON.");
       }
       throw e;
     }

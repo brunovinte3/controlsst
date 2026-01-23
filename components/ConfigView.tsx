@@ -42,20 +42,12 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         onUpdate();
       } else {
         setStatus('error');
-        setErrorMessage('O script respondeu, mas os dados vieram vazios ou em formato incorreto.');
+        setErrorMessage('O script respondeu mas não enviou dados válidos.');
       }
     } catch (err: any) {
-      console.error("Erro capturado no componente:", err);
+      console.error(err);
       setStatus('error');
-      
-      const msg = err.message || '';
-      if (msg.includes('company')) {
-        setErrorMessage('ERRO DE BANCO: A coluna "company" está faltando no seu Supabase. Veja as instruções de reparo abaixo.');
-      } else if (msg.includes('CORS') || msg.includes('Failed to fetch')) {
-        setErrorMessage('ERRO DE CONEXÃO: O Google bloqueou o acesso. Verifique se publicou como "Web App" e se o acesso é para "Qualquer um".');
-      } else {
-        setErrorMessage(`ERRO: ${msg}`);
-      }
+      setErrorMessage(err.message || 'Erro desconhecido na conexão.');
     }
   };
 
@@ -65,23 +57,34 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         <header className="mb-10 text-center">
           <div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl">📊</div>
           <h2 className="text-4xl font-black text-gray-800 mb-2 tracking-tighter">Base de Dados <span className="text-emerald-600">Google Sheets</span></h2>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Integração em tempo real via API /exec</p>
+          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Sincronização via API Cloud</p>
         </header>
 
-        <div className="max-w-2xl mx-auto space-y-8">
-          {(errorMessage.includes('company') || errorMessage.includes('Banco')) && (
-            <div className="bg-amber-50 border-2 border-amber-200 p-6 rounded-[2rem] space-y-3">
-               <h4 className="text-amber-800 font-black text-xs uppercase">🚨 Ação Necessária no Supabase</h4>
-               <p className="text-[11px] text-amber-700 font-medium">Seu banco de dados precisa ser atualizado. No <b>SQL Editor</b> do Supabase, cole e execute:</p>
-               <pre className="bg-amber-900 text-amber-200 p-4 rounded-xl text-[10px] font-mono overflow-x-auto">
-                 ALTER TABLE employees ADD COLUMN company TEXT DEFAULT 'Empresa Padrão';
+        <div className="max-w-3xl mx-auto space-y-8">
+          {status === 'error' && errorMessage.includes('CORS') && (
+            <div className="bg-red-50 border-2 border-red-200 p-8 rounded-[2.5rem] space-y-4 animate-fadeIn">
+               <h4 className="text-red-800 font-black text-xs uppercase flex items-center gap-2">
+                 <span className="text-xl">🛠️</span> Ajuste Necessário no seu Google Script
+               </h4>
+               <p className="text-[11px] text-red-700 font-medium leading-relaxed">
+                 O Google bloqueou a conexão por segurança (CORS). Para liberar, o seu código no Apps Script **precisa** terminar exatamente assim:
+               </p>
+               <pre className="bg-red-900 text-red-200 p-6 rounded-2xl text-[10px] font-mono overflow-x-auto leading-normal">
+{`function doGet(e) {
+  var data = processarDadosDaSuaPlanilha(); // Sua lógica aqui
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+}`}
                </pre>
+               <p className="text-[10px] text-red-600 italic">
+                 * Sem o `.setMimeType(ContentService.MimeType.JSON)`, o navegador não permite que o app leia os dados.
+               </p>
             </div>
           )}
 
           <div className="bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200">
             <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-4 ml-1">
-              URL da Implantação (Web App):
+              URL do Web App (Link final em /exec):
             </label>
             <div className="space-y-4">
               <input 
@@ -98,56 +101,47 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
                   disabled={status === 'testing'}
                   className="flex-1 py-4 bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
                 >
-                  {status === 'testing' ? '⌛ CONECTANDO...' : 'TESTAR E SINCRONIZAR AGORA 🔄'}
+                  {status === 'testing' ? '⌛ CONECTANDO...' : 'TESTAR E ATUALIZAR AGORA 🔄'}
                 </button>
                 <a 
                   href={url} 
                   target="_blank" 
                   rel="noreferrer"
-                  className="px-6 py-4 bg-white border-2 border-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center hover:bg-emerald-50 transition-colors"
-                  title="Abrir link no navegador"
+                  className="px-6 py-4 bg-white border-2 border-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center hover:bg-emerald-50 transition-colors shadow-sm"
                 >
-                  🔗
+                  🔗 Testar Link
                 </a>
               </div>
 
               {status === 'success' && (
                 <div className="bg-green-500 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase animate-bounce">
-                  ✅ Sincronizado com Sucesso!
+                  ✅ Conectado com Sucesso!
                 </div>
               )}
               
               {status === 'error' && (
-                <div className="bg-red-500 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase leading-relaxed shadow-lg">
+                <div className="bg-red-600 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase leading-relaxed shadow-xl">
                   {errorMessage}
                 </div>
               )}
             </div>
           </div>
-
-          <div className="p-6 bg-gray-50 rounded-3xl border border-gray-200 space-y-4">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest italic">🔍 Como resolver problemas de conexão:</h4>
-            <div className="text-[11px] text-gray-500 space-y-2">
-              <p><b>1. Teste o Link:</b> Clique no botão 🔗 acima. Se abrir uma página com o texto da sua planilha, o link está ok. Se pedir senha, a publicação está errada.</p>
-              <p><b>2. Publique Corretamente:</b> No Google Sheets, vá em <i>Extensões > Apps Script</i>. Clique em <b>Implantar > Nova Implantação</b>. Em "Quem pode acessar", selecione <b>"Qualquer um"</b>.</p>
-              <p><b>3. Erro de Banco:</b> Se os dados do Google chegarem mas o erro for "company", rode o comando SQL citado no aviso laranja acima.</p>
-            </div>
-          </div>
         </div>
       </div>
 
+      {/* Seção de Login Admin se mantém igual */}
       <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100">
         <header className="mb-10 flex items-center gap-4">
           <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">👤</div>
           <div>
-            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Login do Administrador</h2>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Controle de acesso ao painel SST</p>
+            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Segurança Administrativa</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Credenciais de acesso ao sistema</p>
           </div>
         </header>
 
         <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-2">
-            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuário</label>
+            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Novo Usuário</label>
             <input 
               type="text" 
               className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
@@ -156,7 +150,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Senha</label>
+            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nova Senha</label>
             <input 
               type="text" 
               className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
@@ -171,7 +165,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
                 isProfileSaved ? 'bg-green-600 text-white' : 'bg-blue-600 text-white shadow-xl hover:scale-[1.02]'
               }`}
             >
-              {isProfileSaved ? 'ATUALIZADO ✅' : 'SALVAR CREDENCIAIS'}
+              {isProfileSaved ? 'ATUALIZADO ✅' : 'SALVAR ALTERAÇÕES'}
             </button>
           </div>
         </form>
