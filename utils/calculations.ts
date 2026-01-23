@@ -7,13 +7,11 @@ const parseFlexibleDate = (dateStr: any): Date | null => {
   if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
   const str = String(dateStr).trim();
   
-  // Formato ISO: YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
     const d = new Date(str);
     return isNaN(d.getTime()) ? null : d;
   }
   
-  // Formato Brasileiro: DD/MM/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
     const [day, month, year] = str.split('/').map(Number);
     const d = new Date(year, month - 1, day);
@@ -66,12 +64,10 @@ export const formatEmployeeData = (rawData: any[]): Employee[] => {
     const trainings: Record<string, TrainingRecord> = {};
     const normalizedRow: any = {};
     
-    // Normaliza todas as chaves do objeto para facilitar a busca
     Object.keys(row).forEach(k => {
       normalizedRow[normalizeKey(k)] = row[k];
     });
 
-    // Processa os cursos de NR
     NR_COURSES.forEach(course => {
       const courseKey = normalizeKey(course.id);
       const completionValue = normalizedRow[courseKey];
@@ -87,16 +83,15 @@ export const formatEmployeeData = (rawData: any[]): Employee[] => {
       };
     });
 
-    // Define a Matrícula como identificador único principal
     const registration = String(normalizedRow['MATRICULA'] || normalizedRow['REGISTRO'] || normalizedRow['RE'] || `ID-${idx}`).trim();
-    const id = row.id || registration; // Usa ID existente ou a matrícula como ID
+    const id = row.id || registration; 
     
     return {
       id: id,
       name: normalizedRow['NOMECOMPLETO'] || normalizedRow['NOME'] || 'Sem Nome',
       registration: registration,
       role: normalizedRow['FUNCAO'] || normalizedRow['CARGO'] || '-',
-      department: normalizedRow['SETOR'] || normalizedRow['DEPARTAMENTO'] || '-',
+      setor: normalizedRow['SETOR'] || normalizedRow['DEPARTAMENTO'] || '-', // Mapeia para setor
       company: normalizedRow['EMPRESA'] || normalizedRow['UNIDADE'] || 'Empresa Padrão',
       photoUrl: normalizedRow['FOTO'] || normalizedRow['URLFOTO'] || undefined,
       trainings,

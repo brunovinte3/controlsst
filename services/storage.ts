@@ -48,10 +48,11 @@ export const StorageService = {
     try {
       const { data, error } = await supabase.from('employees').select('*').order('name');
       if (error) {
-        if (error.message.includes('company')) {
-          const { data: retryData, error: retryError } = await supabase.from('employees').select('id, name, registration, role, department, trainings, photoUrl').order('name');
+        // Fallback caso falte alguma coluna, tenta pegar as básicas
+        if (error.message.includes('column') || error.message.includes('department')) {
+          const { data: retryData, error: retryError } = await supabase.from('employees').select('id, name, registration, role, setor, company, trainings, photoUrl').order('name');
           if (retryError) throw retryError;
-          return (retryData || []).map(item => ({ ...item, company: 'Empresa Padrão', trainings: item.trainings || {} }));
+          return (retryData || []).map(item => ({ ...item, trainings: item.trainings || {} }));
         }
         throw error;
       }
@@ -65,12 +66,6 @@ export const StorageService = {
     if (!employees.length) return;
     try {
       const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
-      if (error && error.message.includes('company')) {
-        const cleanEmployees = employees.map(({ company, ...rest }) => rest);
-        const { error: retryError } = await supabase.from('employees').upsert(cleanEmployees, { onConflict: 'id' });
-        if (retryError) throw retryError;
-        return;
-      }
       if (error) throw error;
     } catch (err: any) {
       throw new Error(`Erro no Banco: ${err.message}`);
@@ -98,16 +93,15 @@ export const StorageService = {
 
       const text = await response.text();
       
-      // Se o texto começar com <!DOCTYPE, significa que o Google enviou HTML (erro de permissão/login)
       if (text.trim().startsWith('<!DOCTYPE')) {
-        throw new Error("Erro de Permissão: O link está correto, mas o script exige Login. Publique novamente como 'Qualquer um' (Anyone) no Google.");
+        throw new Error("Erro de Permissão: O script exige Login. Publique como 'Qualquer um'.");
       }
 
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        throw new Error("O Google não enviou um JSON válido. Verifique se o código do script termina com .setMimeType(ContentService.MimeType.JSON).");
+        throw new Error("O Google não enviou um JSON válido.");
       }
       
       if (data && data.error) {
@@ -124,9 +118,6 @@ export const StorageService = {
       return false;
     } catch (e: any) {
       console.error("Erro na Sincronização:", e);
-      if (e.message === 'Failed to fetch') {
-        throw new Error("Bloqueio de Segurança (CORS): O navegador impediu a leitura. Garanta que o script termina com '.setMimeType(ContentService.MimeType.JSON)'.");
-      }
       throw e;
     }
   },

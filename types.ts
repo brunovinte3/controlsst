@@ -21,8 +21,8 @@ export interface Employee {
   name: string;
   registration: string;
   role: string;
-  department: string;
-  company: string; // Nova coluna para gestão multi-empresa
+  setor: string; // Alterado de department para setor
+  company: string;
   photoUrl?: string;
   trainings: Record<string, TrainingRecord>;
 }

@@ -42,14 +42,23 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         onUpdate();
       } else {
         setStatus('error');
-        setErrorMessage('O Google respondeu, mas não encontramos dados. Verifique os nomes das colunas (NOME, MATRICULA, etc).');
+        setErrorMessage('O Google respondeu mas o formato dos dados é incompatível.');
       }
     } catch (err: any) {
-      console.error("Erro de Sincronização:", err);
+      console.error("Erro detectado:", err);
       setStatus('error');
-      setErrorMessage(err.message || 'Falha de conexão com a nuvem Google.');
+      setErrorMessage(err.message || 'Erro de conexão.');
     }
   };
+
+  const sqlFix = `-- COMANDO PARA REPARAR O BANCO DE DADOS (SUPABASE)
+-- Copie tudo e cole no SQL Editor do Supabase
+
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS setor TEXT DEFAULT 'Geral';
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'Não Definido';
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS company TEXT DEFAULT 'Empresa Padrão';
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS "photoUrl" TEXT;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS trainings JSONB DEFAULT '{}'::jsonb;`;
 
   const googleScriptCode = `function doGet(e) {
   try {
@@ -82,36 +91,38 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
       <div className="bg-white p-10 rounded-[3rem] shadow-2xl shadow-emerald-900/5 border-2 border-emerald-100">
         <header className="mb-10 text-center">
           <div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl">📊</div>
-          <h2 className="text-4xl font-black text-gray-800 mb-2 tracking-tighter">Base de Dados <span className="text-emerald-600">Google Sheets</span></h2>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Sincronização Cloud via API /exec</p>
+          <h2 className="text-4xl font-black text-gray-800 mb-2 tracking-tighter">Base de Dados <span className="text-emerald-600">SST Cloud</span></h2>
+          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Configuração de Integração Sheets & Supabase</p>
         </header>
 
         <div className="max-w-4xl mx-auto space-y-8">
-          {/* Alerta de Código do Script */}
-          <div className="bg-emerald-900 text-white p-8 rounded-[2.5rem] space-y-6 shadow-2xl relative overflow-hidden">
-             <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl">⚡</div>
-             <div className="relative z-10">
-               <h4 className="text-emerald-400 font-black text-xs uppercase tracking-[0.2em] mb-4">🛠️ O Código Perfeito para o seu Google Script</h4>
-               <p className="text-xs text-emerald-100/70 mb-6 font-medium leading-relaxed">
-                 Para evitar o erro de conexão, apague tudo o que estiver no seu editor do Google Apps Script e cole o código abaixo exatamente como está. Depois, clique em <b>Implantar > Nova Implantação</b> e selecione <b>"Qualquer um"</b>.
+          {/* Seção de Reparo do Supabase */}
+          {(errorMessage.toLowerCase().includes('column') || errorMessage.toLowerCase().includes('department')) && (
+            <div className="bg-amber-900 text-white p-8 rounded-[2.5rem] space-y-4 border-l-8 border-amber-500 animate-fadeIn">
+               <h4 className="text-amber-400 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                 <span>🚨</span> Erro de Colunas: Resolva agora no Supabase
+               </h4>
+               <p className="text-[11px] text-amber-100/80 font-medium">
+                 O seu banco de dados Supabase está sem a coluna <b>setor</b>. 
+                 Copie o código abaixo, vá no <b>SQL Editor</b> do seu Supabase e clique em <b>Run</b>:
                </p>
                <div className="relative group">
-                 <pre className="bg-black/30 p-6 rounded-2xl text-[10px] font-mono overflow-x-auto leading-normal text-emerald-300 border border-emerald-500/30 max-h-60 custom-scrollbar">
-                   {googleScriptCode}
+                 <pre className="bg-black/40 p-6 rounded-2xl text-[10px] font-mono overflow-x-auto text-amber-200 border border-amber-500/20 max-h-48 overflow-y-auto custom-scrollbar">
+                   {sqlFix}
                  </pre>
                  <button 
-                  onClick={() => navigator.clipboard.writeText(googleScriptCode)}
-                  className="absolute top-4 right-4 bg-emerald-500 text-white text-[9px] px-3 py-1 rounded-lg font-black hover:bg-emerald-400"
+                  onClick={() => navigator.clipboard.writeText(sqlFix)}
+                  className="absolute top-4 right-4 bg-amber-500 text-white text-[9px] px-3 py-1 rounded-lg font-black hover:bg-amber-400"
                  >
-                   COPIAR CÓDIGO
+                   COPIAR SQL
                  </button>
                </div>
-             </div>
-          </div>
+            </div>
+          )}
 
-          <div className="bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200 shadow-inner">
+          <div className="bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200">
             <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-4 ml-1">
-              URL da Implantação Gerada (Web App):
+              URL da API do Google (Sua Planilha):
             </label>
             <div className="space-y-4">
               <input 
@@ -128,27 +139,18 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
                   disabled={status === 'testing'}
                   className="flex-1 py-4 bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
                 >
-                  {status === 'testing' ? '⌛ ESTABELECENDO CONEXÃO...' : 'TESTAR E SINCRONIZAR 🔄'}
+                  {status === 'testing' ? '⌛ SINCRONIZANDO...' : 'TESTAR E ATUALIZAR AGORA 🔄'}
                 </button>
-                <a 
-                  href={url} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="px-6 py-4 bg-white border-2 border-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center hover:bg-emerald-50 transition-colors shadow-sm"
-                  title="Abrir no Navegador"
-                >
-                  🔗
-                </a>
               </div>
 
               {status === 'success' && (
                 <div className="bg-green-500 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase animate-bounce">
-                  ✅ Sincronização Cloud Ativa!
+                  ✅ Sincronizado com Sucesso!
                 </div>
               )}
               
               {status === 'error' && (
-                <div className="bg-red-600 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase leading-relaxed shadow-xl animate-shake">
+                <div className="bg-red-600 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase leading-relaxed shadow-xl">
                   {errorMessage}
                 </div>
               )}
@@ -192,7 +194,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
                 isProfileSaved ? 'bg-green-600 text-white' : 'bg-blue-600 text-white shadow-xl hover:scale-[1.02]'
               }`}
             >
-              {isProfileSaved ? 'SALVO COM SUCESSO ✅' : 'ATUALIZAR ACESSO'}
+              {isProfileSaved ? 'SALVO ✅' : 'ATUALIZAR ACESSO'}
             </button>
           </div>
         </form>
