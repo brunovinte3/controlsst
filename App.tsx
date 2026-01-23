@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import EmployeeView from './components/EmployeeView';
+import VisitorSearchView from './components/VisitorSearchView';
 import Reports from './components/Reports';
 import MatrixView from './components/MatrixView';
 import ImportData from './components/ImportData';
@@ -19,10 +20,18 @@ const App: React.FC = () => {
 
   const isAdmin = userRole === 'admin';
 
+  // Define aba padrão ao logar
+  useEffect(() => {
+    if (userRole === 'visitor') {
+      setActiveTab('visitor_search');
+    } else if (userRole === 'admin') {
+      setActiveTab('dashboard');
+    }
+  }, [userRole]);
+
   const loadData = async (forceSync = false) => {
     setIsLoading(true);
     try {
-      // Sempre tenta buscar os dados mais recentes (Sheets -> Supabase)
       const data = await StorageService.getEmployees();
       setEmployees(data);
     } catch (error) {
@@ -42,12 +51,11 @@ const App: React.FC = () => {
     if (!isAdmin) return;
     setIsLoading(true);
     try {
-      // No modo importação manual, tentamos salvar no Supabase
       await StorageService.saveEmployees(data);
       setEmployees(data);
       setActiveTab('dashboard');
     } catch (error) {
-      console.warn("Erro ao salvar importação no Supabase, mantendo em memória.");
+      console.warn("Erro ao salvar importação, mantendo em memória.");
       setEmployees(data);
       setActiveTab('dashboard');
     } finally {
@@ -64,14 +72,15 @@ const App: React.FC = () => {
       return (
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
           <div className="w-12 h-12 border-4 border-emerald-100 border-t-emerald-600 rounded-full animate-spin"></div>
-          <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest italic">Sincronizando com Google Sheets...</p>
+          <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest italic">Sincronizando com Base de Dados...</p>
         </div>
       );
     }
 
     switch (activeTab) {
       case 'dashboard': return <Dashboard employees={employees} isAdmin={isAdmin} />;
-      case 'employees': return <EmployeeView employees={employees} onUpdate={loadData} isAdmin={isAdmin} />;
+      case 'employees': return isAdmin ? <EmployeeView employees={employees} onUpdate={loadData} isAdmin={isAdmin} /> : null;
+      case 'visitor_search': return <VisitorSearchView employees={employees} />;
       case 'reports': return <Reports employees={employees} />;
       case 'matrix': return <MatrixView />;
       case 'import': return isAdmin ? <ImportData onImport={handleImport} /> : null;

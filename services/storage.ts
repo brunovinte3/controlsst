@@ -3,7 +3,6 @@ import { Employee, AdminProfile, CompanyProfile, TrainingPhoto } from '../types'
 import { supabase } from './supabase';
 import { formatEmployeeData } from '../utils/calculations';
 
-// URL fornecida pelo usuário como padrão
 const DEFAULT_SHEETS_URL = 'https://script.google.com/macros/s/AKfycbyazZ7cte9PaYLtBnlPNm62UvRjzRttAQsWxsb0vaQI6J_jZ37lgwJ4lxsFp5Do8M8c/exec';
 
 const DEFAULT_ADMIN: AdminProfile = {
@@ -21,7 +20,6 @@ const DEFAULT_COMPANY: CompanyProfile = {
 };
 
 export const StorageService = {
-  // Configurações do App (Supabase ainda é útil aqui)
   async getAppSettings(): Promise<{ company: CompanyProfile, admin: AdminProfile }> {
     try {
       const { data, error } = await supabase.from('app_settings').select('*');
@@ -38,36 +36,31 @@ export const StorageService = {
     try {
       await supabase.from('app_settings').upsert({ key, value });
     } catch (e) {
-      console.warn("Não foi possível salvar configuração no Supabase, usando local.");
+      console.warn("Não foi possível salvar configuração no Supabase.");
     }
   },
 
-  // BUSCA DE FUNCIONÁRIOS (HÍBRIDA)
   async getEmployees(): Promise<Employee[]> {
-    // 1. Tenta buscar da Planilha primeiro (Sua fonte real)
     try {
       const sheetsData = await this.fetchDirectlyFromSheets();
       if (sheetsData.length > 0) {
-        // Tenta espelhar no Supabase em background (sem travar se der erro)
-        this.saveEmployees(sheetsData).catch(e => console.warn("Erro ao espelhar no Supabase:", e.message));
+        this.saveEmployees(sheetsData).catch(e => console.warn("Erro ao espelhar no Supabase"));
         return sheetsData;
       }
     } catch (e) {
-      console.error("Erro ao buscar do Google Sheets, tentando Supabase...", e);
+      console.error("Erro ao buscar do Google Sheets");
     }
 
-    // 2. Fallback: Se o Google falhar, tenta o Supabase
     try {
       const { data, error } = await supabase.from('employees').select('*').order('name');
       if (!error && data) return data.map(item => ({ ...item, trainings: item.trainings || {} }));
     } catch (e) {
-      console.error("Supabase também falhou.");
+      console.error("Supabase falhou");
     }
 
     return [];
   },
 
-  // Busca direta do Google Apps Script
   async fetchDirectlyFromSheets(): Promise<Employee[]> {
     const url = this.getSheetsUrl();
     if (!url) return [];
@@ -78,34 +71,30 @@ export const StorageService = {
       const text = await response.text();
       const data = JSON.parse(text);
       if (Array.isArray(data)) {
-        return formatEmployeeData(data);
+        const formatted = formatEmployeeData(data);
+        if (formatted.length > 0) {
+           this.setLastSyncTime(); // Registra o sucesso aqui
+        }
+        return formatted;
       }
     } catch (e) {
-      console.error("Erro fetch Sheets:", e);
+      console.error("Erro fetch Sheets");
     }
     return [];
   },
 
   async saveEmployees(employees: Employee[]): Promise<void> {
     if (!employees.length) return;
-    // Opcional: Salva no Supabase para busca rápida e persistência de fotos
     try {
-      const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
-      if (error) {
-        // Se der erro de coluna, não interrompemos o fluxo do usuário
-        console.warn("Supabase recusou os dados (Schema Cache). Os dados estão apenas na memória/Sheets.");
-      }
-    } catch (err) {
-      console.warn("Erro silencioso no Supabase:", err);
-    }
+      await supabase.from('employees').upsert(employees, { onConflict: 'id' });
+    } catch (err) {}
   },
 
   async updateEmployee(employee: Employee): Promise<void> {
-    // Se editar manualmente no app, tentamos salvar no Supabase
     try {
       await supabase.from('employees').upsert(employee);
     } catch (e) {
-      alert("Nota: Edição salva apenas nesta sessão. Para persistir, altere na sua Planilha Google.");
+      alert("Salvo apenas localmente.");
     }
   },
 
@@ -113,6 +102,7 @@ export const StorageService = {
     const data = await this.fetchDirectlyFromSheets();
     if (data.length > 0) {
       await this.saveEmployees(data);
+      this.setLastSyncTime(); // Garante o registro no sync explícito
       return true;
     }
     return false;
@@ -126,17 +116,19 @@ export const StorageService = {
     localStorage.setItem('google_sheets_url', url.trim());
   },
 
-  async getTrainingPhotos(): Promise<TrainingPhoto[]> {
-    try {
-      const { data } = await supabase.from('training_photos').select('*');
-      return data || [];
-    } catch (e) { return []; }
+  getLastSyncTime(): string | null {
+    return localStorage.getItem('last_sync_timestamp');
   },
 
-  async saveTrainingPhotos(photos: TrainingPhoto[]): Promise<void> {
-    for (const photo of photos) {
-      try { await supabase.from('training_photos').upsert(photo); } catch(e) {}
-    }
+  setLastSyncTime(): void {
+    const now = new Date().toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    localStorage.setItem('last_sync_timestamp', now);
   },
 
   getAdminProfile(): AdminProfile { return DEFAULT_ADMIN; },
@@ -144,15 +136,5 @@ export const StorageService = {
 
   async updateAdminProfile(admin: AdminProfile) {
     await this.updateAppSetting('admin_profile', admin);
-  },
-
-  async downloadBackup() {
-    const data = await this.getEmployees();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `backup_sst.json`;
-    a.click();
   }
 };

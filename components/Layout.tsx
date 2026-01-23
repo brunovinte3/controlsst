@@ -17,17 +17,26 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   const [config, setConfig] = useState<{company: CompanyProfile, admin: AdminProfile} | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(StorageService.getLastSyncTime());
   const hasSheetsUrl = !!StorageService.getSheetsUrl();
 
   useEffect(() => {
     StorageService.getAppSettings().then(setConfig);
+    
+    // Atualiza o tempo de sincronização a cada 10 segundos para feedback rápido
+    const interval = setInterval(() => {
+      setLastSync(StorageService.getLastSyncTime());
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const handleSync = async () => {
     setIsSyncing(true);
     const success = await StorageService.syncWithSheets();
-    if (success && onRefreshData) {
-      onRefreshData();
+    if (success) {
+      setLastSync(StorageService.getLastSyncTime());
+      if (onRefreshData) onRefreshData();
     }
     setIsSyncing(false);
   };
@@ -41,14 +50,19 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   
   const allTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊', adminOnly: false },
-    { id: 'employees', label: 'Funcionários', icon: '👷', adminOnly: false },
+    { id: 'employees', label: 'Funcionários', icon: '👷', adminOnly: true },
+    { id: 'visitor_search', label: 'Consulta Rápida', icon: '🔍', adminOnly: false, visitorOnly: true },
     { id: 'reports', label: 'Relatórios', icon: '📋', adminOnly: false },
     { id: 'matrix', label: 'Matriz de Cursos', icon: '📜', adminOnly: false },
     { id: 'import', label: 'Importação', icon: '📥', adminOnly: true },
     { id: 'config', label: 'Configuração', icon: '⚙️', adminOnly: true },
   ];
 
-  const visibleTabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
+  const visibleTabs = allTabs.filter(tab => {
+    if (tab.adminOnly && !isAdmin) return false;
+    if (tab.visitorOnly && isAdmin) return false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#F0FDF4]">
@@ -66,7 +80,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
         </button>
       </div>
 
-      {/* Sidebar Overlay Mobile */}
       {isMobileMenuOpen && (
         <div 
           className="md:hidden fixed inset-0 bg-black/50 z-[100] backdrop-blur-sm"
@@ -79,7 +92,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
         fixed inset-y-0 left-0 z-[105] w-72 md:relative md:w-80 bg-[#064E3B] text-white flex flex-col no-print shadow-2xl transition-transform duration-300
         ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
       `}>
-        {/* LOGO */}
         <div className="p-10 border-b border-green-800/50">
           <header className="flex flex-col items-start">
             <div className="relative w-16 h-16 mb-4">
@@ -88,18 +100,13 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
                 <span>⛑️</span>
               </div>
             </div>
-
             <h1 className="text-3xl font-black tracking-tighter leading-none italic">
               <span className="text-white">Control</span>
               <span className="text-emerald-400">SST</span>
             </h1>
-            <p className="text-[8px] text-emerald-300/40 font-black uppercase tracking-[0.2em] mt-2 italic">
-              Gestão Profissional de SST
-            </p>
           </header>
         </div>
 
-        {/* Links */}
         <div className="flex-1 py-6 px-4 space-y-2 overflow-y-auto">
           {visibleTabs.map((tab) => (
             <button
@@ -117,46 +124,61 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
           ))}
 
           {isAdmin && hasSheetsUrl && (
-            <button
-              onClick={handleSync}
-              disabled={isSyncing}
-              className={`w-full text-left px-5 py-4 mt-8 rounded-2xl flex items-center gap-4 transition-all border-2 border-emerald-500/30 bg-emerald-900/20 hover:bg-emerald-500 hover:text-white ${isSyncing ? 'animate-pulse' : ''}`}
-            >
-              <span className={`text-xl ${isSyncing ? 'animate-spin' : ''}`}>🔄</span>
-              <span className="text-sm tracking-wide uppercase font-black text-[10px]">
-                {isSyncing ? 'Sincronizando...' : 'Sincronizar Planilha'}
-              </span>
-            </button>
+            <div className="pt-8 space-y-3">
+              <button
+                onClick={handleSync}
+                disabled={isSyncing}
+                className={`w-full text-left px-5 py-4 rounded-2xl flex items-center gap-4 transition-all border-2 border-emerald-500/30 bg-emerald-900/20 hover:bg-emerald-500 hover:text-white ${isSyncing ? 'animate-pulse' : ''}`}
+              >
+                <span className={`text-xl ${isSyncing ? 'animate-spin' : ''}`}>🔄</span>
+                <span className="text-sm tracking-wide uppercase font-black text-[10px]">
+                  {isSyncing ? 'Sincronizando...' : 'Sincronizar Agora'}
+                </span>
+              </button>
+              
+              {/* Informação de Última Sincronização (Sidebar) */}
+              <div className="px-5 py-3 bg-black/20 rounded-2xl border border-emerald-800/40 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xs italic">i</div>
+                <div>
+                  <p className="text-[7px] font-black text-emerald-400 uppercase tracking-widest leading-none mb-1">Última Atualização Sheets</p>
+                  <p className="text-[9px] font-bold text-emerald-100/60 font-mono">{lastSync || 'Pendente'}</p>
+                </div>
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Footer Sidebar */}
         <div className="p-6 border-t border-green-800/50 space-y-4 bg-green-950/20">
-          <div className="bg-green-900/40 p-4 rounded-3xl border border-green-700/30 flex items-center gap-4">
-            <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center text-xl shadow-lg shadow-emerald-900/40">
-              {isAdmin ? config.admin.icon : '👀'}
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-[10px] font-black uppercase text-emerald-400 truncate tracking-widest">
-                {isAdmin ? config.admin.username : 'Visitante'}
-              </p>
-              <p className="text-[8px] font-bold text-emerald-300/40 uppercase tracking-tighter truncate">
-                {isAdmin ? 'Controle Total' : 'Modo Leitura'}
-              </p>
-            </div>
-          </div>
-          
           <button 
             onClick={onLogout} 
-            className="w-full py-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20 flex items-center justify-center gap-2 group active:scale-95"
+            className="w-full py-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20 flex items-center justify-center gap-2"
           >
-            <span>SAIR DO SISTEMA</span>
-            <span className="group-hover:translate-x-1 transition-transform">🚪</span>
+            <span>SAIR</span> 🚪
           </button>
         </div>
       </nav>
 
       <main className="flex-1 overflow-x-hidden h-screen flex flex-col relative z-0">
+        {/* INDICADOR DE STATUS GLOBAL (NO TOPO) */}
+        <div className="no-print p-4 md:px-12 md:pt-8 md:pb-0 flex justify-end">
+            <div className="bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full border border-emerald-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow cursor-default">
+               <div className="flex items-center gap-2">
+                  <span className="relative flex h-2 w-2">
+                    <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${lastSync ? 'bg-emerald-400' : 'bg-gray-400'} opacity-75`}></span>
+                    <span className={`relative inline-flex rounded-full h-2 w-2 ${lastSync ? 'bg-emerald-500' : 'bg-gray-400'}`}></span>
+                  </span>
+                  <p className="text-[8px] font-black text-emerald-900/40 uppercase tracking-widest leading-none">Database Status</p>
+               </div>
+               <div className="h-4 w-px bg-emerald-100"></div>
+               <div className="flex items-center gap-2">
+                  <span className="text-[10px]">☁️</span>
+                  <p className="text-[9px] font-black text-emerald-700 uppercase italic">
+                    {lastSync ? `Sincronizado em ${lastSync}` : 'Aguardando Sincronização Inicial'}
+                  </p>
+               </div>
+            </div>
+        </div>
+
         <div className="flex-1 p-4 md:p-12 max-w-7xl mx-auto w-full">
           {children}
         </div>

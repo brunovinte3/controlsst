@@ -7,6 +7,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
   const [url, setUrl] = useState(StorageService.getSheetsUrl());
   const [status, setStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [lastSync, setLastSync] = useState<string | null>(StorageService.getLastSyncTime());
   
   const initialAdmin = StorageService.getAdminProfile();
   const [adminProfile, setAdminProfile] = useState<AdminProfile>(initialAdmin);
@@ -14,6 +15,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
 
   useEffect(() => {
     setUrl(StorageService.getSheetsUrl());
+    setLastSync(StorageService.getLastSyncTime());
   }, []);
 
   const handleSaveProfile = (e: React.FormEvent) => {
@@ -39,6 +41,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
       const success = await StorageService.syncWithSheets();
       if (success) {
         setStatus('success');
+        setLastSync(StorageService.getLastSyncTime());
         onUpdate();
       } else {
         setStatus('error');
@@ -81,7 +84,13 @@ NOTIFY pgrst, 'reload schema';`;
         <header className="mb-10 text-center">
           <div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl">📊</div>
           <h2 className="text-4xl font-black text-gray-800 mb-2 tracking-tighter">Base de Dados <span className="text-emerald-600">SST Cloud</span></h2>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Configuração de Integração Sheets & Supabase</p>
+          <div className="flex items-center justify-center gap-2 mt-1">
+             <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Integração Sheets & Supabase</p>
+             <span className="w-1 h-1 bg-gray-300 rounded-full"></span>
+             <p className="text-emerald-600 font-black uppercase text-[10px] tracking-widest italic">
+               Status: {lastSync ? `Sincronizado em ${lastSync}` : 'Aguardando Sincronização'}
+             </p>
+          </div>
         </header>
 
         <div className="max-w-4xl mx-auto space-y-8">
