@@ -79,16 +79,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
             </div>
           ) : (
             <div className="flex items-center gap-3 mb-2">
-              <div className="bg-emerald-500 w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-emerald-400/30">
-                {config.company.logoUrl.startsWith('http') ? (
-                  <img src={config.company.logoUrl} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl">{config.company.logoUrl || '🛡️'}</span>
-                )}
+              <div className="bg-orange-500 w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-orange-400/30">
+                 <span className="text-2xl">⛑️</span>
               </div>
               <h1 className="text-2xl font-black tracking-tighter leading-none italic truncate">
-                {config.company.name.substring(0, Math.ceil(config.company.name.length/2))}
-                <span className="text-emerald-400">{config.company.name.substring(Math.ceil(config.company.name.length/2))}</span>
+                <span className="text-white">Control</span>
+                <span className="text-emerald-400">SST</span>
               </h1>
             </div>
           )}
@@ -141,7 +137,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
         </div>
         <footer className="p-8 text-center border-t border-gray-50 no-print">
           <p className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-300 italic">
-            {config.company.name} © {new Date().getFullYear()} • <span className="text-emerald-300/50">brunosilva1232014@gmail.com</span>
+            ControlSST © {new Date().getFullYear()} • <span className="text-emerald-300/50">brunosilva1232014@gmail.com</span>
           </p>
         </footer>
       </main>
