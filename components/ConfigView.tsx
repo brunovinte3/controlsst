@@ -42,14 +42,40 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         onUpdate();
       } else {
         setStatus('error');
-        setErrorMessage('O script respondeu mas não enviou dados válidos.');
+        setErrorMessage('O Google respondeu, mas não encontramos dados. Verifique os nomes das colunas (NOME, MATRICULA, etc).');
       }
     } catch (err: any) {
-      console.error(err);
+      console.error("Erro de Sincronização:", err);
       setStatus('error');
-      setErrorMessage(err.message || 'Erro desconhecido na conexão.');
+      setErrorMessage(err.message || 'Falha de conexão com a nuvem Google.');
     }
   };
+
+  const googleScriptCode = `function doGet(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheets()[0];
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0];
+    var jsonArray = [];
+    for (var i = 1; i < data.length; i++) {
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        var header = headers[j].toString().trim();
+        var value = data[i][j];
+        if (value instanceof Date) {
+          obj[header] = Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
+        } else { obj[header] = value; }
+      }
+      jsonArray.push(obj);
+    }
+    return ContentService.createTextOutput(JSON.stringify(jsonArray))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({"error": error.toString()}))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}`;
 
   return (
     <div className="max-w-6xl mx-auto animate-fadeIn space-y-12 pb-20">
@@ -57,34 +83,35 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         <header className="mb-10 text-center">
           <div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center text-3xl mx-auto mb-6 shadow-xl">📊</div>
           <h2 className="text-4xl font-black text-gray-800 mb-2 tracking-tighter">Base de Dados <span className="text-emerald-600">Google Sheets</span></h2>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Sincronização via API Cloud</p>
+          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Sincronização Cloud via API /exec</p>
         </header>
 
-        <div className="max-w-3xl mx-auto space-y-8">
-          {status === 'error' && errorMessage.includes('CORS') && (
-            <div className="bg-red-50 border-2 border-red-200 p-8 rounded-[2.5rem] space-y-4 animate-fadeIn">
-               <h4 className="text-red-800 font-black text-xs uppercase flex items-center gap-2">
-                 <span className="text-xl">🛠️</span> Ajuste Necessário no seu Google Script
-               </h4>
-               <p className="text-[11px] text-red-700 font-medium leading-relaxed">
-                 O Google bloqueou a conexão por segurança (CORS). Para liberar, o seu código no Apps Script **precisa** terminar exatamente assim:
+        <div className="max-w-4xl mx-auto space-y-8">
+          {/* Alerta de Código do Script */}
+          <div className="bg-emerald-900 text-white p-8 rounded-[2.5rem] space-y-6 shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl">⚡</div>
+             <div className="relative z-10">
+               <h4 className="text-emerald-400 font-black text-xs uppercase tracking-[0.2em] mb-4">🛠️ O Código Perfeito para o seu Google Script</h4>
+               <p className="text-xs text-emerald-100/70 mb-6 font-medium leading-relaxed">
+                 Para evitar o erro de conexão, apague tudo o que estiver no seu editor do Google Apps Script e cole o código abaixo exatamente como está. Depois, clique em <b>Implantar > Nova Implantação</b> e selecione <b>"Qualquer um"</b>.
                </p>
-               <pre className="bg-red-900 text-red-200 p-6 rounded-2xl text-[10px] font-mono overflow-x-auto leading-normal">
-{`function doGet(e) {
-  var data = processarDadosDaSuaPlanilha(); // Sua lógica aqui
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON);
-}`}
-               </pre>
-               <p className="text-[10px] text-red-600 italic">
-                 * Sem o `.setMimeType(ContentService.MimeType.JSON)`, o navegador não permite que o app leia os dados.
-               </p>
-            </div>
-          )}
+               <div className="relative group">
+                 <pre className="bg-black/30 p-6 rounded-2xl text-[10px] font-mono overflow-x-auto leading-normal text-emerald-300 border border-emerald-500/30 max-h-60 custom-scrollbar">
+                   {googleScriptCode}
+                 </pre>
+                 <button 
+                  onClick={() => navigator.clipboard.writeText(googleScriptCode)}
+                  className="absolute top-4 right-4 bg-emerald-500 text-white text-[9px] px-3 py-1 rounded-lg font-black hover:bg-emerald-400"
+                 >
+                   COPIAR CÓDIGO
+                 </button>
+               </div>
+             </div>
+          </div>
 
-          <div className="bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200">
+          <div className="bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200 shadow-inner">
             <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-4 ml-1">
-              URL do Web App (Link final em /exec):
+              URL da Implantação Gerada (Web App):
             </label>
             <div className="space-y-4">
               <input 
@@ -101,26 +128,27 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
                   disabled={status === 'testing'}
                   className="flex-1 py-4 bg-emerald-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
                 >
-                  {status === 'testing' ? '⌛ CONECTANDO...' : 'TESTAR E ATUALIZAR AGORA 🔄'}
+                  {status === 'testing' ? '⌛ ESTABELECENDO CONEXÃO...' : 'TESTAR E SINCRONIZAR 🔄'}
                 </button>
                 <a 
                   href={url} 
                   target="_blank" 
                   rel="noreferrer"
                   className="px-6 py-4 bg-white border-2 border-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center hover:bg-emerald-50 transition-colors shadow-sm"
+                  title="Abrir no Navegador"
                 >
-                  🔗 Testar Link
+                  🔗
                 </a>
               </div>
 
               {status === 'success' && (
                 <div className="bg-green-500 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase animate-bounce">
-                  ✅ Conectado com Sucesso!
+                  ✅ Sincronização Cloud Ativa!
                 </div>
               )}
               
               {status === 'error' && (
-                <div className="bg-red-600 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase leading-relaxed shadow-xl">
+                <div className="bg-red-600 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase leading-relaxed shadow-xl animate-shake">
                   {errorMessage}
                 </div>
               )}
@@ -129,19 +157,18 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         </div>
       </div>
 
-      {/* Seção de Login Admin se mantém igual */}
       <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100">
         <header className="mb-10 flex items-center gap-4">
           <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">👤</div>
           <div>
-            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Segurança Administrativa</h2>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Credenciais de acesso ao sistema</p>
+            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Login Administrativo</h2>
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Alterar credenciais de segurança</p>
           </div>
         </header>
 
         <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="space-y-2">
-            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Novo Usuário</label>
+            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuário</label>
             <input 
               type="text" 
               className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
@@ -150,7 +177,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Nova Senha</label>
+            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Senha</label>
             <input 
               type="text" 
               className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
@@ -165,7 +192,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
                 isProfileSaved ? 'bg-green-600 text-white' : 'bg-blue-600 text-white shadow-xl hover:scale-[1.02]'
               }`}
             >
-              {isProfileSaved ? 'ATUALIZADO ✅' : 'SALVAR ALTERAÇÕES'}
+              {isProfileSaved ? 'SALVO COM SUCESSO ✅' : 'ATUALIZAR ACESSO'}
             </button>
           </div>
         </form>

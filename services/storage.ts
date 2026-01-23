@@ -86,8 +86,6 @@ export const StorageService = {
     if (!url) return false;
 
     try {
-      // Simplificamos o fetch removendo headers que disparam Pre-flight CORS (OPTIONS)
-      // O Google Apps Script exige redirect: follow
       const response = await fetch(url, { 
         method: 'GET',
         redirect: 'follow',
@@ -95,19 +93,27 @@ export const StorageService = {
       });
 
       if (!response.ok) {
-        throw new Error(`Google Error: ${response.status}`);
+        throw new Error(`Google retornou erro: ${response.status}`);
       }
 
       const text = await response.text();
-      let data;
       
+      // Se o texto começar com <!DOCTYPE, significa que o Google enviou HTML (erro de permissão/login)
+      if (text.trim().startsWith('<!DOCTYPE')) {
+        throw new Error("Erro de Permissão: O link está correto, mas o script exige Login. Publique novamente como 'Qualquer um' (Anyone) no Google.");
+      }
+
+      let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        console.error("Conteúdo recebido não é JSON:", text.substring(0, 100));
-        throw new Error("O Google retornou uma página HTML em vez de dados. Verifique se o Script foi publicado como 'Qualquer um' e não 'Qualquer um com conta Google'.");
+        throw new Error("O Google não enviou um JSON válido. Verifique se o código do script termina com .setMimeType(ContentService.MimeType.JSON).");
       }
       
+      if (data && data.error) {
+        throw new Error(`Erro no Script Google: ${data.error}`);
+      }
+
       if (Array.isArray(data)) {
         const formatted = formatEmployeeData(data);
         if (formatted.length > 0) {
@@ -119,7 +125,7 @@ export const StorageService = {
     } catch (e: any) {
       console.error("Erro na Sincronização:", e);
       if (e.message === 'Failed to fetch') {
-        throw new Error("CORS Block: O navegador impediu a conexão. Certifique-se de que o seu script doGet() retorna ContentService.MimeType.JSON.");
+        throw new Error("Bloqueio de Segurança (CORS): O navegador impediu a leitura. Garanta que o script termina com '.setMimeType(ContentService.MimeType.JSON)'.");
       }
       throw e;
     }
