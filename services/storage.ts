@@ -18,93 +18,106 @@ const DEFAULT_COMPANY: CompanyProfile = {
 
 export const StorageService = {
   async getAppSettings(): Promise<{ company: CompanyProfile, admin: AdminProfile }> {
-    const { data, error } = await supabase.from('app_settings').select('*');
-    if (error || !data || data.length === 0) {
+    try {
+      const { data, error } = await supabase.from('app_settings').select('*');
+      if (error) {
+        console.error("Erro Supabase (app_settings):", error.message);
+        return { company: DEFAULT_COMPANY, admin: DEFAULT_ADMIN };
+      }
+      
+      const company = data?.find(i => i.key === 'company_profile')?.value || DEFAULT_COMPANY;
+      const admin = data?.find(i => i.key === 'admin_profile')?.value || DEFAULT_ADMIN;
+      
+      return { company, admin };
+    } catch (e) {
+      console.error("Falha crítica ao buscar configurações:", e);
       return { company: DEFAULT_COMPANY, admin: DEFAULT_ADMIN };
     }
-    
-    const company = data.find(i => i.key === 'company_profile')?.value || DEFAULT_COMPANY;
-    const admin = data.find(i => i.key === 'admin_profile')?.value || DEFAULT_ADMIN;
-    
-    return { company, admin };
   },
 
   async updateAppSetting(key: 'company_profile' | 'admin_profile', value: any) {
-    await supabase.from('app_settings').upsert({ key, value });
+    const { error } = await supabase.from('app_settings').upsert({ key, value });
+    if (error) console.error("Erro ao salvar configuração:", error.message);
   },
 
-  // Fix: Added missing method to update company profile in app settings
   async updateCompanyProfile(company: CompanyProfile) {
     return this.updateAppSetting('company_profile', company);
   },
 
-  // Fix: Added missing method to update admin profile in app settings
   async updateAdminProfile(admin: AdminProfile) {
     return this.updateAppSetting('admin_profile', admin);
   },
 
-  // Fix: Added missing method to retrieve Google Sheets URL from local storage
   getSheetsUrl(): string | null {
     return localStorage.getItem('sst_sheets_url');
   },
 
-  // Fix: Added missing method to persist Google Sheets URL in local storage
   saveSheetsUrl(url: string) {
     localStorage.setItem('sst_sheets_url', url);
   },
 
   async getEmployees(): Promise<Employee[]> {
-    const { data, error } = await supabase.from('employees').select('*');
-    if (error) return [];
-    return data.map(item => ({
-        ...item,
-        trainings: item.trainings || {}
-    }));
+    try {
+      const { data, error } = await supabase.from('employees').select('*');
+      if (error) {
+        console.error("Erro Supabase (employees):", error.message);
+        return [];
+      }
+      return (data || []).map(item => ({
+          ...item,
+          trainings: item.trainings || {}
+      }));
+    } catch (e) {
+      console.error("Falha ao buscar funcionários:", e);
+      return [];
+    }
   },
 
   async saveEmployees(employees: Employee[]): Promise<void> {
-    // Para simplificar, deletamos e inserimos ou fazemos upsert
-    // O ideal em produção seria um upsert baseado em ID
     for (const emp of employees) {
-      await supabase.from('employees').upsert(emp);
+      const { error } = await supabase.from('employees').upsert(emp);
+      if (error) console.error(`Erro ao salvar funcionário ${emp.name}:`, error.message);
     }
   },
 
   async addEmployees(newEmployees: Employee[]): Promise<Employee[]> {
-    for (const emp of newEmployees) {
-      await supabase.from('employees').upsert(emp);
-    }
+    await this.saveEmployees(newEmployees);
     return this.getEmployees();
   },
 
   async updateEmployee(updatedEmp: Employee): Promise<Employee[]> {
-    await supabase.from('employees').upsert(updatedEmp);
+    const { error } = await supabase.from('employees').upsert(updatedEmp);
+    if (error) console.error("Erro ao atualizar funcionário:", error.message);
     return this.getEmployees();
   },
 
   async deleteEmployee(id: string): Promise<Employee[]> {
-    await supabase.from('employees').delete().eq('id', id);
+    const { error } = await supabase.from('employees').delete().eq('id', id);
+    if (error) console.error("Erro ao deletar funcionário:", error.message);
     return this.getEmployees();
   },
 
   async getTrainingPhotos(): Promise<TrainingPhoto[]> {
     const { data, error } = await supabase.from('training_photos').select('*');
-    if (error) return [];
-    return data;
+    if (error) {
+      console.error("Erro Supabase (photos):", error.message);
+      return [];
+    }
+    return data || [];
   },
 
   async saveTrainingPhotos(photos: TrainingPhoto[]): Promise<void> {
-    // Upsert das fotos
     for (const photo of photos) {
-      await supabase.from('training_photos').upsert(photo);
+      const { error } = await supabase.from('training_photos').upsert(photo);
+      if (error) console.error("Erro ao salvar foto:", error.message);
     }
   },
 
   async removeTrainingPhoto(id: string): Promise<void> {
-    await supabase.from('training_photos').delete().eq('id', id);
+    const { error } = await supabase.from('training_photos').delete().eq('id', id);
+    if (error) console.error("Erro ao remover foto:", error.message);
   },
 
-  // Perfil administrativo estático ou vindo do DB
   getAdminProfile(): AdminProfile {
     return DEFAULT_ADMIN;
   },
@@ -113,14 +126,13 @@ export const StorageService = {
     return DEFAULT_COMPANY;
   },
 
-  downloadBackup() {
-    this.getEmployees().then(data => {
-      const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `backup_sst_${new Date().toISOString().split('T')[0]}.json`;
-      a.click();
-    });
+  async downloadBackup() {
+    const data = await this.getEmployees();
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `backup_sst_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
   }
 };

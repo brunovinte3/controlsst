@@ -78,10 +78,14 @@ export const formatEmployeeData = (rawData: any[]): Employee[] => {
       };
     });
 
+    const registration = normalizedRow['MATRICULA'] || normalizedRow['REGISTRO'] || `ID-${idx}`;
+    
     return {
-      id: row.id || `emp-${idx}-${Date.now()}`,
+      // Importante: O ID deve ser estável para o upsert do Supabase funcionar.
+      // Se não houver ID na planilha, usamos a Matrícula.
+      id: row.id || registration,
       name: normalizedRow['NOMECOMPLETO'] || normalizedRow['NOME'] || 'Sem Nome',
-      registration: normalizedRow['MATRICULA'] || normalizedRow['REGISTRO'] || '-',
+      registration: registration,
       role: normalizedRow['FUNCAO'] || normalizedRow['CARGO'] || '-',
       department: normalizedRow['SETOR'] || normalizedRow['DEPARTAMENTO'] || '-',
       company: normalizedRow['EMPRESA'] || normalizedRow['UNIDADE'] || 'Empresa Padrão',
