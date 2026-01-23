@@ -6,7 +6,6 @@ import EmployeeView from './components/EmployeeView';
 import VisitorSearchView from './components/VisitorSearchView';
 import Reports from './components/Reports';
 import MatrixView from './components/MatrixView';
-import ImportData from './components/ImportData';
 import ConfigView from './components/ConfigView';
 import AuthView from './components/AuthView';
 import { Employee, UserRole } from './types';
@@ -20,7 +19,6 @@ const App: React.FC = () => {
 
   const isAdmin = userRole === 'admin';
 
-  // Define aba padrão ao logar
   useEffect(() => {
     if (userRole === 'visitor') {
       setActiveTab('visitor_search');
@@ -47,22 +45,6 @@ const App: React.FC = () => {
     }
   }, [userRole]);
 
-  const handleImport = async (data: Employee[]) => {
-    if (!isAdmin) return;
-    setIsLoading(true);
-    try {
-      await StorageService.saveEmployees(data);
-      setEmployees(data);
-      setActiveTab('dashboard');
-    } catch (error) {
-      console.warn("Erro ao salvar importação, mantendo em memória.");
-      setEmployees(data);
-      setActiveTab('dashboard');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (!userRole) {
     return <AuthView onLogin={(role) => setUserRole(role)} />;
   }
@@ -83,7 +65,6 @@ const App: React.FC = () => {
       case 'visitor_search': return <VisitorSearchView employees={employees} />;
       case 'reports': return <Reports employees={employees} />;
       case 'matrix': return <MatrixView />;
-      case 'import': return isAdmin ? <ImportData onImport={handleImport} /> : null;
       case 'config': return isAdmin ? <ConfigView onUpdate={loadData} /> : null;
       default: return <Dashboard employees={employees} isAdmin={isAdmin} />;
     }

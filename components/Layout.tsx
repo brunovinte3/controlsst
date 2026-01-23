@@ -23,7 +23,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   useEffect(() => {
     StorageService.getAppSettings().then(setConfig);
     
-    // Atualiza o tempo de sincronização a cada 10 segundos para feedback rápido
     const interval = setInterval(() => {
       setLastSync(StorageService.getLastSyncTime());
     }, 10000);
@@ -50,11 +49,10 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   
   const allTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊', adminOnly: false },
-    { id: 'employees', label: 'Funcionários', icon: '👷', adminOnly: true },
+    { id: 'employees', label: 'Cadastro de Funcionários', icon: '👷', adminOnly: true },
     { id: 'visitor_search', label: 'Consulta Rápida', icon: '🔍', adminOnly: false, visitorOnly: true },
     { id: 'reports', label: 'Relatórios', icon: '📋', adminOnly: false },
     { id: 'matrix', label: 'Matriz de Cursos', icon: '📜', adminOnly: false },
-    { id: 'import', label: 'Importação', icon: '📥', adminOnly: true },
     { id: 'config', label: 'Configuração', icon: '⚙️', adminOnly: true },
   ];
 
@@ -136,7 +134,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
                 </span>
               </button>
               
-              {/* Informação de Última Sincronização (Sidebar) */}
               <div className="px-5 py-3 bg-black/20 rounded-2xl border border-emerald-800/40 flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xs italic">i</div>
                 <div>
@@ -159,7 +156,6 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
       </nav>
 
       <main className="flex-1 overflow-x-hidden h-screen flex flex-col relative z-0">
-        {/* INDICADOR DE STATUS GLOBAL (NO TOPO) */}
         <div className="no-print p-4 md:px-12 md:pt-8 md:pb-0 flex justify-end">
             <div className="bg-white/80 backdrop-blur-md px-5 py-2.5 rounded-full border border-emerald-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow cursor-default">
                <div className="flex items-center gap-2">
