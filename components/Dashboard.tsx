@@ -143,7 +143,9 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
             courseName: courseInfo?.name || cid,
             completion: record.completionDate,
             expiry: record.expiryDate,
-            days: days
+            days: days,
+            isCipero: ['VALID', 'EXPIRING'].includes(emp.trainings['NR05']?.status),
+            isBrigadista: ['VALID', 'EXPIRING'].includes(emp.trainings['NR23']?.status)
           });
         }
       });
@@ -181,62 +183,29 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
         </div>
       </header>
 
-      {/* CARDS DE INDICADORES PRINCIPAIS - AGORA CLICÁVEIS */}
+      {/* CARDS INDICADORES */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <button 
-          onClick={() => handleDetailView('CRITICAL_15')}
-          className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-red-100 flex items-center gap-6 group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 text-left w-full"
-        >
+        <button onClick={() => handleDetailView('CRITICAL_15')} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-red-100 flex items-center gap-6 group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 text-left w-full">
           <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center text-xl group-hover:bg-red-500 group-hover:text-white transition-colors flex-shrink-0 shadow-inner">🚨</div>
-          <div className="overflow-hidden">
-            <p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest truncate">Crítico (15 dias)</p>
-            <h4 className="text-3xl font-black text-red-600 tracking-tighter leading-none mt-1">{stats.s.expiring15}</h4>
-          </div>
+          <div className="overflow-hidden"><p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest truncate">Crítico (15 dias)</p><h4 className="text-3xl font-black text-red-600 tracking-tighter leading-none mt-1">{stats.s.expiring15}</h4></div>
         </button>
-
-        <button 
-          onClick={() => handleDetailView('ALERT_60')}
-          className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-amber-100 flex items-center gap-6 group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 text-left w-full"
-        >
+        <button onClick={() => handleDetailView('ALERT_60')} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-amber-100 flex items-center gap-6 group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 text-left w-full">
           <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-xl group-hover:bg-amber-500 group-hover:text-white transition-colors flex-shrink-0 shadow-inner">⏳</div>
-          <div className="overflow-hidden">
-            <p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest truncate">Alerta (60 dias)</p>
-            <h4 className="text-3xl font-black text-amber-500 tracking-tighter leading-none mt-1">{stats.s.expiring60}</h4>
-          </div>
+          <div className="overflow-hidden"><p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest truncate">Alerta (60 dias)</p><h4 className="text-3xl font-black text-amber-500 tracking-tighter leading-none mt-1">{stats.s.expiring60}</h4></div>
         </button>
-
-        <button 
-          onClick={() => handleDetailView('RECENT_30')}
-          className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-emerald-100 flex items-center gap-6 group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 text-left w-full"
-        >
+        <button onClick={() => handleDetailView('RECENT_30')} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-emerald-100 flex items-center gap-6 group hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 text-left w-full">
           <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-xl group-hover:bg-emerald-500 group-hover:text-white transition-colors flex-shrink-0 shadow-inner">🔥</div>
-          <div className="overflow-hidden">
-            <p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest truncate">Realizados (30 dias)</p>
-            <h4 className="text-3xl font-black text-emerald-600 tracking-tighter leading-none mt-1">{stats.s.recentTrainings}</h4>
-          </div>
+          <div className="overflow-hidden"><p className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest truncate">Realizados (30 dias)</p><h4 className="text-3xl font-black text-emerald-600 tracking-tighter leading-none mt-1">{stats.s.recentTrainings}</h4></div>
         </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-8 rounded-[2.5rem] md:rounded-[3.5rem] shadow-sm border border-emerald-100 overflow-hidden hover:shadow-xl transition-shadow relative group">
            <h3 className="text-[10px] font-black text-emerald-800/40 uppercase tracking-widest mb-6 text-center">Saúde Normativa Global</h3>
-           <div className="absolute top-14 left-1/2 -translate-x-1/2 bg-emerald-900 text-white text-[7px] font-black px-3 py-1 rounded-full uppercase tracking-tighter opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-             Clique em uma cor para detalhes
-           </div>
            <div className="h-[300px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie 
-                  data={stats.statusData} 
-                  cx="50%" 
-                  cy="50%" 
-                  innerRadius={70} 
-                  outerRadius={100} 
-                  paddingAngle={8} 
-                  dataKey="value"
-                  onClick={(data) => handlePieClick(data)}
-                  className="cursor-pointer"
-                >
+                <Pie data={stats.statusData} cx="50%" cy="50%" innerRadius={70} outerRadius={100} paddingAngle={8} dataKey="value" onClick={(data) => handlePieClick(data)} className="cursor-pointer">
                   {stats.statusData.map((e, i) => <Cell key={i} fill={e.color} stroke="#fff" strokeWidth={4} className="hover:opacity-80 transition-opacity" />)}
                 </Pie>
                 <Tooltip content={<CustomTooltip />} />
@@ -264,29 +233,7 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        {[
-          { label: 'Total Cursos Ativos', val: stats.s.trained, color: 'text-emerald-600', bg: 'bg-emerald-50', icon: '✅', type: 'VALID' },
-          { label: 'Total Em Vencimento', val: stats.s.expiring, color: 'text-amber-500', bg: 'bg-amber-50', icon: '⏳', type: 'EXPIRING' },
-          { label: 'Total Cursos Expirados', val: stats.s.expired, color: 'text-red-600', bg: 'bg-red-50', icon: '🚨', type: 'EXPIRED' },
-          { label: 'Total Efetivo', val: stats.filteredCount, color: 'text-emerald-700', bg: 'bg-emerald-100/50', icon: '👷', type: null },
-        ].map((item, i) => (
-          <button 
-            key={i} 
-            disabled={!item.type}
-            onClick={() => item.type && handleDetailView(item.type as any)}
-            className={`bg-white p-6 rounded-[2.5rem] shadow-sm border border-emerald-100 hover:shadow-xl hover:-translate-y-1 transition-all active:scale-95 text-left ${!item.type ? 'cursor-default' : ''}`}
-          >
-            <div className="flex justify-between items-center">
-              <span className={`text-xl p-3 rounded-2xl ${item.bg} shadow-inner`}>{item.icon}</span>
-              <span className={`text-3xl font-black tracking-tighter ${item.color}`}>{item.val}</span>
-            </div>
-            <p className="mt-4 text-[9px] font-black text-emerald-800/40 uppercase tracking-widest leading-none">{item.label}</p>
-          </button>
-        ))}
-      </div>
-
-      {/* MODAL DE DETALHES (BALÃO INFORMATIVO) */}
+      {/* MODAL DE DETALHES COM TAGS C E B */}
       {detailModal && (
         <div className="fixed inset-0 bg-emerald-950/80 backdrop-blur-xl z-[1200] flex items-center justify-center p-4 md:p-8 overflow-y-auto no-print">
           <div className="bg-white w-full max-w-6xl rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] animate-fadeIn border border-emerald-100">
@@ -295,151 +242,49 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl shadow-lg ${detailModal.status ? STATUS_CONFIG[detailModal.status]?.bg : 'bg-emerald-50'}`}>
                    {detailModal.label.includes('Crítico') || detailModal.label.includes('Alerta') ? '⏳' : detailModal.label.includes('Vencido') ? '🚨' : '✅'}
                 </div>
-                <div>
-                  <h3 className="text-xl md:text-2xl font-black text-emerald-900 italic tracking-tighter leading-none">
-                    {detailModal.label}
-                  </h3>
-                  <p className="text-[9px] font-bold text-emerald-700/40 uppercase tracking-widest mt-2 flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>
-                    Relatório Detalhado por Setor, Função e NR
-                  </p>
-                </div>
+                <div><h3 className="text-xl md:text-2xl font-black text-emerald-900 italic tracking-tighter leading-none">{detailModal.label}</h3><p className="text-[9px] font-bold text-emerald-700/40 uppercase tracking-widest mt-2 flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>Relatório Detalhado</p></div>
               </div>
               <div className="flex gap-4">
-                <button 
-                  onClick={() => window.print()}
-                  className="bg-emerald-900 text-emerald-400 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-800 transition-all shadow-xl active:scale-95 flex items-center gap-2"
-                >
-                  <span>IMPRIMIR RELATÓRIO</span>
-                  <span>🖨️</span>
-                </button>
-                <button 
-                  onClick={() => setDetailModal(null)}
-                  className="w-12 h-12 flex items-center justify-center bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all text-xl active:scale-90"
-                >
-                  ✕
-                </button>
+                <button onClick={() => window.print()} className="bg-emerald-900 text-emerald-400 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-emerald-800 transition-all shadow-xl active:scale-95 flex items-center gap-2"><span>IMPRIMIR RELATÓRIO</span><span>🖨️</span></button>
+                <button onClick={() => setDetailModal(null)} className="w-12 h-12 flex items-center justify-center bg-red-50 text-red-500 rounded-full hover:bg-red-500 hover:text-white transition-all text-xl active:scale-90">✕</button>
               </div>
             </header>
 
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar space-y-12">
-              {detailModal.data.length > 0 ? (
-                <div className="grid grid-cols-1 gap-12">
-                  {detailModal.data.map((sec, idx) => (
-                    <div key={idx} className="space-y-4">
-                      <div className="flex items-center gap-4 border-b border-emerald-100 pb-2">
-                         <h4 className="text-[14px] font-black text-emerald-800 uppercase tracking-widest italic">{sec.sector}</h4>
-                         <span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[9px] font-black shadow-sm">{sec.list.length} ocorrências</span>
+              {detailModal.data.map((sec, idx) => (
+                <div key={idx} className="space-y-4">
+                  <div className="flex items-center gap-4 border-b border-emerald-100 pb-2"><h4 className="text-[14px] font-black text-emerald-800 uppercase tracking-widest italic">{sec.sector}</h4><span className="bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-[9px] font-black shadow-sm">{sec.list.length} ocorrências</span></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {sec.list.map((item: any, i: number) => (
+                      <div key={i} className="bg-emerald-50/20 border border-emerald-100 p-6 rounded-[2.5rem] flex flex-col justify-between group hover:bg-white hover:shadow-xl hover:border-emerald-300 transition-all cursor-default">
+                        <div className="mb-4">
+                           <div className="flex items-start justify-between">
+                              <p className="text-sm font-black text-emerald-950 uppercase leading-tight mb-2 pr-10">{item.name}</p>
+                              <div className="flex gap-1">
+                                {item.isCipero && <span className="w-6 h-6 bg-emerald-500 text-white rounded-md flex items-center justify-center text-[10px] font-black shadow-sm">C</span>}
+                                {item.isBrigadista && <span className="w-6 h-6 bg-red-500 text-white rounded-md flex items-center justify-center text-[10px] font-black shadow-sm">B</span>}
+                              </div>
+                           </div>
+                           <div className="flex flex-col gap-1">
+                              <p className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest">RE: {item.reg}</p>
+                              <p className="text-[10px] font-black text-emerald-800/80 uppercase tracking-tighter">Função: <span className="text-emerald-600 italic">{item.role}</span></p>
+                           </div>
+                        </div>
+                        <div className="pt-4 border-t border-emerald-50/50">
+                           <div className="flex justify-between items-start">
+                              <div className="flex flex-col gap-1"><span className="text-[10px] font-black text-emerald-600 italic bg-emerald-50 px-2 py-1 rounded-lg w-fit">{item.courseId}</span><span className="text-[8px] font-bold text-gray-400 uppercase leading-none max-w-[120px]">{item.courseName}</span></div>
+                              <div className="text-right"><p className="text-[10px] font-black text-emerald-900 leading-none">Venc: {item.expiry ? new Date(item.expiry).toLocaleDateString('pt-BR') : '--/--/--'}</p><p className={`text-[8px] font-black uppercase mt-1 ${item.days < 0 ? 'text-red-500' : 'text-amber-500'}`}>{item.days !== null ? (item.days < 0 ? `Expirado (${Math.abs(item.days)}d)` : `${item.days} dias restantes`) : 'N/A'}</p></div>
+                           </div>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {sec.list.map((item: any, i: number) => (
-                          <div key={i} className="bg-emerald-50/20 border border-emerald-100 p-6 rounded-[2.5rem] flex flex-col justify-between group hover:bg-white hover:shadow-xl hover:border-emerald-300 transition-all cursor-default">
-                            <div className="mb-4">
-                               <p className="text-sm font-black text-emerald-950 uppercase leading-tight mb-2">{item.name}</p>
-                               <div className="flex flex-col gap-1">
-                                  <p className="text-[10px] font-bold text-emerald-600/60 uppercase tracking-widest">RE: {item.reg}</p>
-                                  <p className="text-[10px] font-black text-emerald-800/80 uppercase tracking-tighter">Função: <span className="text-emerald-600 italic">{item.role}</span></p>
-                               </div>
-                            </div>
-                            <div className="pt-4 border-t border-emerald-50/50">
-                               <div className="flex justify-between items-start">
-                                  <div className="flex flex-col gap-1">
-                                    <span className="text-[10px] font-black text-emerald-600 italic bg-emerald-50 px-2 py-1 rounded-lg w-fit">{item.courseId}</span>
-                                    <span className="text-[8px] font-bold text-gray-400 uppercase leading-none max-w-[120px]">{item.courseName}</span>
-                                  </div>
-                                  <div className="text-right">
-                                     <p className="text-[10px] font-black text-emerald-900 leading-none">Venc: {item.expiry ? new Date(item.expiry).toLocaleDateString('pt-BR') : '--/--/--'}</p>
-                                     <p className={`text-[8px] font-black uppercase mt-1 ${item.days < 0 ? 'text-red-500' : 'text-amber-500'}`}>
-                                       {item.days !== null ? (item.days < 0 ? `Expirado (${Math.abs(item.days)}d)` : `${item.days} dias restantes`) : 'N/A'}
-                                     </p>
-                                  </div>
-                               </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center py-24">
-                   <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center text-4xl mb-6 grayscale opacity-30">🏜️</div>
-                   <p className="text-emerald-800/40 font-black uppercase text-xs tracking-[0.2em]">Nenhum registro encontrado para este filtro.</p>
-                </div>
-              )}
+              ))}
             </div>
-            
-            <footer className="p-6 text-center border-t border-emerald-50 bg-emerald-50/40 rounded-b-[3rem]">
-               <p className="text-[8px] font-black text-emerald-800/30 uppercase tracking-[0.4em]">Relatório Auditável ControlSST • Filtro Aplicado: {detailModal.label}</p>
-            </footer>
           </div>
         </div>
       )}
-
-      {/* ÁREA DE IMPRESSÃO (PRINT-ONLY) */}
-      <div className="hidden print:block fixed inset-0 bg-white p-16 text-black z-[99999]">
-         <div className="border-b-4 border-emerald-900 pb-10 mb-10 flex justify-between items-end">
-            <div>
-              <h1 className="text-5xl font-black tracking-tighter italic">Relatório de <span className="text-emerald-600">Convocação</span></h1>
-              <p className="text-sm font-bold text-gray-400 uppercase tracking-widest mt-3">Gestão de Treinamentos Normativos ControlSST</p>
-            </div>
-            <div className="text-right">
-               <div className="bg-black text-white px-4 py-2 rounded-lg text-xs font-black uppercase mb-2">Filtro: {detailModal?.label}</div>
-               <p className="text-[10px] font-bold text-gray-500">Documento Gerado em: {new Date().toLocaleString('pt-BR')}</p>
-            </div>
-         </div>
-         
-         {detailModal?.data.map((sec, idx) => (
-           <div key={idx} className="mb-12 break-inside-avoid">
-             <div className="flex items-center gap-4 mb-6 bg-gray-50 p-4 border-l-[12px] border-emerald-600">
-                <h2 className="text-2xl font-black uppercase italic">{sec.sector}</h2>
-                <span className="bg-white border border-gray-200 px-3 py-1 rounded-full text-xs font-bold">{sec.list.length} Registros</span>
-             </div>
-             <table className="w-full text-left border-collapse">
-               <thead>
-                 <tr className="border-b-2 border-emerald-900 text-[9px] font-black uppercase text-emerald-900 bg-emerald-50/30">
-                   <th className="py-4 px-2">Colaborador</th>
-                   <th className="py-4 px-2">RE</th>
-                   <th className="py-4 px-2">Função</th>
-                   <th className="py-4 px-2">NR / Curso</th>
-                   <th className="py-4 px-2">Vencimento</th>
-                   <th className="py-4 px-2 text-right">Situação</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {sec.list.map((item: any, i: number) => (
-                   <tr key={i} className="border-b border-gray-100 text-[10px]">
-                     <td className="py-4 px-2 font-bold uppercase">{item.name}</td>
-                     <td className="py-4 px-2 font-mono text-gray-500">{item.reg}</td>
-                     <td className="py-4 px-2 uppercase font-medium">{item.role}</td>
-                     <td className="py-4 px-2">
-                        <span className="font-black text-emerald-700">{item.courseId}</span>
-                        <div className="text-[8px] text-gray-400 font-bold leading-none">{item.courseName}</div>
-                     </td>
-                     <td className="py-4 px-2">{item.expiry ? new Date(item.expiry).toLocaleDateString('pt-BR') : '-'}</td>
-                     <td className="py-4 px-2 text-right">
-                        <span className={`font-black uppercase text-[9px] ${item.days < 0 ? 'text-red-600' : 'text-amber-600'}`}>
-                           {item.days !== null ? (item.days < 0 ? `Expirado (${Math.abs(item.days)}d)` : `${item.days} dias`) : '-'}
-                        </span>
-                     </td>
-                   </tr>
-                 ))}
-               </tbody>
-             </table>
-           </div>
-         ))}
-         
-         <div className="mt-24 pt-10 border-t-2 border-dashed border-gray-200 flex justify-between">
-            <div className="text-center w-80">
-               <div className="h-0.5 bg-gray-300 mb-2"></div>
-               <p className="text-[10px] font-black uppercase text-gray-400">Responsável SST / SESMT</p>
-            </div>
-            <div className="text-center w-80">
-               <div className="h-0.5 bg-gray-300 mb-2"></div>
-               <p className="text-[10px] font-black uppercase text-gray-400">Assinatura Gestor da Área</p>
-            </div>
-         </div>
-      </div>
     </div>
   );
 };

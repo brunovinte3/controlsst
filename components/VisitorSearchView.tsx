@@ -45,9 +45,8 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
     setSearchTerm('');
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
+  const isCipero = (emp: Employee) => ['VALID', 'EXPIRING'].includes(emp.trainings['NR05']?.status);
+  const isBrigadista = (emp: Employee) => ['VALID', 'EXPIRING'].includes(emp.trainings['NR23']?.status);
 
   return (
     <div className="space-y-8 animate-fadeIn pb-20">
@@ -73,21 +72,26 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
                 <button 
                   key={emp.id}
                   onClick={() => handleSelect(emp)}
-                  className="w-full p-4 flex items-center gap-4 hover:bg-emerald-50 transition-colors border-b border-emerald-50 last:border-0"
+                  className="w-full p-6 flex items-center justify-between hover:bg-emerald-50 transition-colors border-b border-emerald-50 last:border-0"
                 >
-                  <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center font-black text-emerald-700">
-                    {emp.name.charAt(0)}
+                  <div className="flex items-center gap-4">
+                    <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center font-black text-emerald-700">
+                      {emp.name.charAt(0)}
+                    </div>
+                    <div className="text-left">
+                      <p className="text-xs font-black text-emerald-950 uppercase">{emp.name}</p>
+                      <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">RE: {emp.registration} • {emp.setor}</p>
+                    </div>
                   </div>
-                  <div className="text-left">
-                    <p className="text-xs font-black text-emerald-950 uppercase">{emp.name}</p>
-                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">RE: {emp.registration} • {emp.setor}</p>
+                  <div className="flex gap-2">
+                    {isCipero(emp) && <span className="w-6 h-6 bg-emerald-500 text-white rounded flex items-center justify-center text-[10px] font-black shadow-sm">C</span>}
+                    {isBrigadista(emp) && <span className="w-6 h-6 bg-red-500 text-white rounded flex items-center justify-center text-[10px] font-black shadow-sm">B</span>}
                   </div>
                 </button>
               ))}
             </div>
           )}
         </div>
-        <p className="text-center text-[10px] font-black text-emerald-800/20 uppercase tracking-widest italic">Pesquise pela matrícula ou nome completo</p>
       </div>
 
       {selectedEmployee ? (
@@ -96,10 +100,26 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
             
             <div className="p-8 md:p-12 bg-emerald-50/50 flex flex-col md:flex-row items-center gap-8 border-b border-emerald-100 print:bg-white print:border-emerald-900 print:border-b-4 relative">
               
-              {/* Carimbo de Sincronização na Ficha */}
-              <div className="absolute top-4 right-8 text-right no-print">
-                 <p className="text-[7px] font-black text-emerald-800/20 uppercase tracking-[0.2em] leading-none">Dados Sincronizados em:</p>
-                 <p className="text-[9px] font-black text-emerald-600/40 italic">{lastSync || 'Data não disponível'}</p>
+              <div className="absolute top-4 right-8 text-right no-print flex items-center gap-4">
+                 <div className="flex gap-2">
+                    {isCipero(selectedEmployee) && (
+                      <div className="flex items-center gap-2 bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200">
+                         <span className="w-5 h-5 bg-emerald-500 text-white rounded-md flex items-center justify-center text-[10px] font-black">C</span>
+                         <span className="text-[8px] font-black text-emerald-700 uppercase tracking-widest">CIPEIRO</span>
+                      </div>
+                    )}
+                    {isBrigadista(selectedEmployee) && (
+                      <div className="flex items-center gap-2 bg-red-100 px-3 py-1.5 rounded-xl border border-red-200">
+                         <span className="w-5 h-5 bg-red-500 text-white rounded-md flex items-center justify-center text-[10px] font-black">B</span>
+                         <span className="text-[8px] font-black text-red-700 uppercase tracking-widest">BRIGADISTA</span>
+                      </div>
+                    )}
+                 </div>
+                 <div className="h-8 w-px bg-emerald-200"></div>
+                 <div>
+                    <p className="text-[7px] font-black text-emerald-800/20 uppercase tracking-[0.2em] leading-none">Dados Sincronizados em:</p>
+                    <p className="text-[9px] font-black text-emerald-600/40 italic">{lastSync || 'Data não disponível'}</p>
+                 </div>
               </div>
 
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2.5rem] bg-white border-4 border-white shadow-xl overflow-hidden flex-shrink-0 print:shadow-none">
@@ -114,7 +134,13 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
               
               <div className="flex-1 text-center md:text-left">
                 <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-3">
-                  <h3 className="text-2xl md:text-3xl font-black text-emerald-950 uppercase tracking-tighter">{selectedEmployee.name}</h3>
+                  <h3 className="text-2xl md:text-3xl font-black text-emerald-950 uppercase tracking-tighter flex items-center justify-center md:justify-start gap-3">
+                    {selectedEmployee.name}
+                    <div className="flex gap-1 print:hidden">
+                       {isCipero(selectedEmployee) && <span className="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-black shadow-lg">C</span>}
+                       {isBrigadista(selectedEmployee) && <span className="w-8 h-8 bg-red-500 text-white rounded-xl flex items-center justify-center text-sm font-black shadow-lg">B</span>}
+                    </div>
+                  </h3>
                   <span className="bg-emerald-900 text-emerald-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest w-fit mx-auto md:mx-0 print:bg-black print:text-white">
                     RE: {selectedEmployee.registration}
                   </span>
@@ -134,7 +160,7 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
 
               <div className="no-print">
                  <button 
-                  onClick={handlePrint}
+                  onClick={() => window.print()}
                   className="bg-emerald-900 text-emerald-400 px-8 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                  >
                    IMPRIMIR FICHA 🖨️
