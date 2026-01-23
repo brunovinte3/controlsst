@@ -48,17 +48,13 @@ export const StorageService = {
     return this.updateAppSetting('admin_profile', admin);
   },
 
-  getSheetsUrl(): string | null {
-    return localStorage.getItem('sst_sheets_url');
-  },
-
-  saveSheetsUrl(url: string) {
-    localStorage.setItem('sst_sheets_url', url);
-  },
-
   async getEmployees(): Promise<Employee[]> {
     try {
-      const { data, error } = await supabase.from('employees').select('*');
+      const { data, error } = await supabase
+        .from('employees')
+        .select('*')
+        .order('name', { ascending: true });
+        
       if (error) {
         console.error("Erro Supabase (employees):", error.message);
         return [];
@@ -74,9 +70,16 @@ export const StorageService = {
   },
 
   async saveEmployees(employees: Employee[]): Promise<void> {
-    for (const emp of employees) {
-      const { error } = await supabase.from('employees').upsert(emp);
-      if (error) console.error(`Erro ao salvar funcionário ${emp.name}:`, error.message);
+    if (!employees.length) return;
+    
+    // Otimização: Envia todos de uma vez (Batch Upsert)
+    const { error } = await supabase
+      .from('employees')
+      .upsert(employees, { onConflict: 'id' });
+      
+    if (error) {
+      console.error("Erro crítico ao salvar lote de funcionários:", error.message);
+      throw new Error(error.message);
     }
   },
 
@@ -124,6 +127,16 @@ export const StorageService = {
 
   getCompanyProfile(): CompanyProfile {
     return DEFAULT_COMPANY;
+  },
+
+  // Fix: Added missing method getSheetsUrl used in ConfigView.tsx
+  getSheetsUrl(): string | null {
+    return localStorage.getItem('google_sheets_url');
+  },
+
+  // Fix: Added missing method saveSheetsUrl used in ConfigView.tsx
+  saveSheetsUrl(url: string): void {
+    localStorage.setItem('google_sheets_url', url);
   },
 
   async downloadBackup() {

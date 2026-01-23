@@ -6,15 +6,20 @@ const parseFlexibleDate = (dateStr: any): Date | null => {
   if (!dateStr || dateStr === '-' || String(dateStr).toLowerCase() === 'n/a' || dateStr === '') return null;
   if (dateStr instanceof Date) return isNaN(dateStr.getTime()) ? null : dateStr;
   const str = String(dateStr).trim();
+  
+  // Formato ISO: YYYY-MM-DD
   if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
     const d = new Date(str);
     return isNaN(d.getTime()) ? null : d;
   }
+  
+  // Formato Brasileiro: DD/MM/YYYY
   if (/^\d{1,2}\/\d{1,2}\/\d{4}/.test(str)) {
     const [day, month, year] = str.split('/').map(Number);
     const d = new Date(year, month - 1, day);
     return isNaN(d.getTime()) ? null : d;
   }
+  
   const d = new Date(str);
   return isNaN(d.getTime()) ? null : d;
 };
@@ -60,16 +65,20 @@ export const formatEmployeeData = (rawData: any[]): Employee[] => {
   return rawData.map((row, idx) => {
     const trainings: Record<string, TrainingRecord> = {};
     const normalizedRow: any = {};
+    
+    // Normaliza todas as chaves do objeto para facilitar a busca
     Object.keys(row).forEach(k => {
       normalizedRow[normalizeKey(k)] = row[k];
     });
 
+    // Processa os cursos de NR
     NR_COURSES.forEach(course => {
       const courseKey = normalizeKey(course.id);
       const completionValue = normalizedRow[courseKey];
       const status = calculateTrainingStatus(completionValue, course.validityYears);
       const expiryDate = getExpiryDate(completionValue, course.validityYears);
       const parsedDate = parseFlexibleDate(completionValue);
+      
       trainings[course.id] = {
         courseId: course.id,
         completionDate: parsedDate ? parsedDate.toISOString().split('T')[0] : undefined,
@@ -78,12 +87,12 @@ export const formatEmployeeData = (rawData: any[]): Employee[] => {
       };
     });
 
-    const registration = normalizedRow['MATRICULA'] || normalizedRow['REGISTRO'] || `ID-${idx}`;
+    // Define a Matrícula como identificador único principal
+    const registration = String(normalizedRow['MATRICULA'] || normalizedRow['REGISTRO'] || normalizedRow['RE'] || `ID-${idx}`).trim();
+    const id = row.id || registration; // Usa ID existente ou a matrícula como ID
     
     return {
-      // Importante: O ID deve ser estável para o upsert do Supabase funcionar.
-      // Se não houver ID na planilha, usamos a Matrícula.
-      id: row.id || registration,
+      id: id,
       name: normalizedRow['NOMECOMPLETO'] || normalizedRow['NOME'] || 'Sem Nome',
       registration: registration,
       role: normalizedRow['FUNCAO'] || normalizedRow['CARGO'] || '-',

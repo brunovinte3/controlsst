@@ -12,8 +12,10 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
   const [error, setError] = useState('');
   const [parsedEmployees, setParsedEmployees] = useState<Employee[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState(false);
 
   const handleProcess = () => {
+    setSyncSuccess(false);
     try {
       const trimmedInput = inputText.trim();
       if (!trimmedInput) {
@@ -64,13 +66,15 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
   const handleSync = async () => {
     if (parsedEmployees.length === 0) return;
     setIsProcessing(true);
+    setError('');
     try {
       await onImport(parsedEmployees);
+      setSyncSuccess(true);
       setParsedEmployees([]);
       setInputText('');
-      alert('Sincronização com Supabase concluída com sucesso!');
-    } catch (err) {
-      setError('Erro ao sincronizar com o banco de dados.');
+      setTimeout(() => setSyncSuccess(false), 5000);
+    } catch (err: any) {
+      setError(`Erro ao sincronizar: ${err.message || 'Verifique sua conexão e as tabelas no Supabase.'}`);
     } finally {
       setIsProcessing(false);
     }
@@ -80,6 +84,7 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
     setInputText('');
     setParsedEmployees([]);
     setError('');
+    setSyncSuccess(false);
   };
 
   return (
@@ -111,9 +116,9 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
           {[
-            { label: 'Identificação', val: 'Nome, RE, Cargo', icon: '👤' },
+            { label: 'Identificação', val: 'Matrícula (Chave Única)', icon: '🆔' },
             { label: 'Cursos', val: 'NRs em colunas', icon: '📜' },
-            { label: 'Datas', val: 'DD/MM/AAAA', icon: '📅' },
+            { label: 'Sincronia', val: 'Atualiza Existentes', icon: '♻️' },
             { label: 'Status', val: 'Automático', icon: '⚡' },
           ].map((item, i) => (
             <div key={i} className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
@@ -150,15 +155,25 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
           </div>
         )}
 
-        {parsedEmployees.length > 0 && (
+        {syncSuccess && (
+          <div className="mt-6 p-6 bg-emerald-600 text-white rounded-[1.5rem] shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-4 animate-fadeIn">
+            <span className="text-2xl">✅</span>
+            <div className="text-center">
+              <p className="font-black uppercase text-xs tracking-widest">Sincronização Concluída!</p>
+              <p className="text-[10px] opacity-80 font-bold uppercase">Todos os dados estão salvos no Supabase.</p>
+            </div>
+          </div>
+        )}
+
+        {parsedEmployees.length > 0 && !syncSuccess && (
           <div className="mt-8 p-8 bg-emerald-50 rounded-[2rem] border border-emerald-100 animate-fadeIn">
             <div className="flex justify-between items-center mb-6">
               <div>
                 <h4 className="font-black text-emerald-900 uppercase tracking-tighter">Resumo do Processamento</h4>
-                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">{parsedEmployees.length} registros prontos para sincronizar</p>
+                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">{parsedEmployees.length} registros prontos para persistência</p>
               </div>
               <div className="flex items-center gap-4">
-                <span className="text-[10px] font-black text-emerald-800/40 uppercase">Pronto para o banco?</span>
+                <span className="text-[10px] font-black text-emerald-800/40 uppercase">Enviar ao Banco Cloud?</span>
                 <button 
                   onClick={handleSync}
                   disabled={isProcessing}
@@ -183,7 +198,7 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
 
         <div className="mt-8 flex items-center justify-between opacity-40">
            <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 italic">
-             O sistema sobrescreve dados de funcionários com a mesma matrícula durante a sincronização.
+             O sistema usa o campo "Matrícula" como chave única. Importar o mesmo RE atualizará o registro existente.
            </p>
         </div>
       </div>
