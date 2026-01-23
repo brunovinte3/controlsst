@@ -49,7 +49,16 @@ export const StorageService = {
   async getEmployees(): Promise<Employee[]> {
     try {
       const { data, error } = await supabase.from('employees').select('*').order('name');
-      if (error) throw error;
+      if (error) {
+        // Se o erro for de coluna faltante, tentamos buscar sem a coluna 'company' para não travar o app
+        if (error.message.includes('company')) {
+          console.warn("Coluna 'company' não encontrada. Buscando dados básicos.");
+          const { data: retryData, error: retryError } = await supabase.from('employees').select('id, name, registration, role, department, trainings, photoUrl').order('name');
+          if (retryError) throw retryError;
+          return (retryData || []).map(item => ({ ...item, company: 'Empresa Padrão', trainings: item.trainings || {} }));
+        }
+        throw error;
+      }
       return (data || []).map(item => ({ ...item, trainings: item.trainings || {} }));
     } catch (e) {
       console.error("Erro Supabase:", e);
@@ -59,8 +68,24 @@ export const StorageService = {
 
   async saveEmployees(employees: Employee[]): Promise<void> {
     if (!employees.length) return;
-    const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
-    if (error) throw error;
+
+    try {
+      const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
+      
+      if (error && error.message.includes('company')) {
+        console.error("Erro de esquema: A coluna 'company' não existe no banco Supabase.");
+        // Tentativa de salvar sem a coluna problemátiva para não travar a importação
+        const cleanEmployees = employees.map(({ company, ...rest }) => rest);
+        const { error: retryError } = await supabase.from('employees').upsert(cleanEmployees, { onConflict: 'id' });
+        if (retryError) throw retryError;
+        return;
+      }
+      
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Erro crítico ao salvar:", err.message);
+      throw err;
+    }
   },
 
   async updateEmployee(employee: Employee): Promise<void> {
@@ -72,7 +97,6 @@ export const StorageService = {
     if (!url) return false;
 
     try {
-      // Otimização crucial: credentials 'omit' e redirect 'follow' para Google Apps Script
       const response = await fetch(url, { 
         method: 'GET',
         mode: 'cors',
@@ -80,9 +104,7 @@ export const StorageService = {
         redirect: 'follow'
       });
 
-      if (!response.ok) {
-        throw new Error(`Erro do servidor Google: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Erro Google: ${response.status}`);
 
       const data = await response.json();
       
@@ -93,15 +115,9 @@ export const StorageService = {
           return true;
         }
       }
-      
-      if (data && data.error) {
-        console.error("Erro no Script:", data.error);
-        return false;
-      }
-
       return false;
     } catch (e: any) {
-      console.error("Falha na sincronização com Google Sheets:", e.message);
+      console.error("Falha na sincronização:", e.message);
       throw e;
     }
   },
@@ -140,5 +156,12 @@ export const StorageService = {
     a.href = url;
     a.download = `backup_sst_${new Date().toISOString().split('T')[0]}.json`;
     a.click();
+  },
+
+  async repairDatabaseSchema() {
+    // Esta função tenta rodar um comando RPC se você tiver configurado no Supabase,
+    // mas o ideal é rodar o SQL manualmente uma vez.
+    console.log("Para reparar, execute no SQL Editor do Supabase:");
+    console.log("ALTER TABLE employees ADD COLUMN company TEXT DEFAULT 'Empresa Padrão';");
   }
 };

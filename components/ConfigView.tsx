@@ -47,7 +47,11 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
     } catch (err: any) {
       console.error(err);
       setStatus('error');
-      setErrorMessage('Falha de conexão. Verifique se o script está publicado como "Qualquer um" no Google.');
+      if (err.message.includes('company')) {
+        setErrorMessage('ERRO DE BANCO: A coluna "company" está faltando no seu Supabase. Veja as instruções abaixo.');
+      } else {
+        setErrorMessage('Falha de conexão. Verifique se o script está publicado como "Qualquer um" no Google.');
+      }
     }
   };
 
@@ -61,6 +65,16 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         </header>
 
         <div className="max-w-2xl mx-auto space-y-8">
+          {errorMessage.includes('company') && (
+            <div className="bg-amber-50 border-2 border-amber-200 p-6 rounded-[2rem] space-y-3 animate-pulse">
+               <h4 className="text-amber-800 font-black text-xs uppercase">🚨 Ação Necessária no Supabase</h4>
+               <p className="text-[11px] text-amber-700 font-medium">Seu banco de dados antigo não tem a coluna de "Empresa". Para corrigir, execute este comando no <b>SQL Editor</b> do Supabase:</p>
+               <pre className="bg-amber-900 text-amber-200 p-4 rounded-xl text-[10px] font-mono overflow-x-auto">
+                 ALTER TABLE employees ADD COLUMN company TEXT DEFAULT 'Empresa Padrão';
+               </pre>
+            </div>
+          )}
+
           <div className="bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200">
             <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-widest mb-4 ml-1">
               Link Atual da Implantação:
@@ -100,20 +114,11 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
               )}
               
               {status === 'error' && (
-                <div className="bg-red-500 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase">
+                <div className="bg-red-500 text-white p-4 rounded-xl text-center font-black text-[10px] uppercase leading-relaxed">
                   ❌ {errorMessage}
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="p-6 bg-gray-50 rounded-3xl border border-gray-200">
-            <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3 italic">⚠️ Lembrete de Publicação:</h4>
-            <p className="text-[11px] text-gray-500 leading-relaxed">
-              No seu Google Apps Script, ao clicar em <b>Implantar > Nova Implantação</b>, garanta que:
-              <br/>• <b>Executar como:</b> Eu
-              <br/>• <b>Quem pode acessar:</b> Qualquer um
-            </p>
           </div>
         </div>
       </div>
