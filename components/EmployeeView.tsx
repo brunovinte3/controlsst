@@ -218,10 +218,10 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
         ))}
       </div>
 
-      {/* MODAL DE EDIÇÃO (AQUI ESTAVA O PROBLEMA - RESTAURADO) */}
+      {/* MODAL DE EDIÇÃO - POSICIONADO NO TOPO */}
       {editingEmp && (
-        <div className="fixed inset-0 bg-emerald-950/95 backdrop-blur-2xl z-[1200] flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white w-full max-w-4xl rounded-[4rem] shadow-2xl overflow-hidden my-auto animate-fadeIn border border-emerald-50">
+        <div className="fixed inset-0 bg-emerald-950/95 backdrop-blur-2xl z-[1200] flex items-start justify-center p-4 overflow-y-auto">
+          <div className="bg-white w-full max-w-4xl rounded-[4rem] shadow-2xl overflow-hidden mt-10 mb-20 animate-fadeIn border border-emerald-50">
             <header className="p-10 border-b flex justify-between items-center bg-emerald-50/40">
               <div>
                 <h3 className="text-2xl font-black text-emerald-950 uppercase italic">Ficha de <span className="text-emerald-600">Edição Administrativa</span></h3>
