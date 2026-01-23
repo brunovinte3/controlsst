@@ -56,8 +56,6 @@ export const StorageService = {
     if (error) throw error;
   },
 
-  // Added updateEmployee method to fix property missing error in components/EmployeeView.tsx
-  // This helper wraps saveEmployees to handle single employee updates via upsert.
   async updateEmployee(employee: Employee): Promise<void> {
     return this.saveEmployees([employee]);
   },
@@ -67,18 +65,36 @@ export const StorageService = {
     if (!url) return false;
 
     try {
-      const response = await fetch(url, { cache: 'no-store' });
+      // Usando redirect: 'follow' explicitamente para lidar com o redirecionamento do Google Apps Script
+      const response = await fetch(url, { 
+        method: 'GET',
+        mode: 'cors',
+        cache: 'no-store',
+        redirect: 'follow' 
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`);
+      }
+
       const data = await response.json();
       
-      if (Array.isArray(data)) {
+      if (data && Array.isArray(data)) {
         const formatted = formatEmployeeData(data);
         await this.saveEmployees(formatted);
         return true;
       }
+      
+      if (data && data.error) {
+        console.error("Erro no Script do Google:", data.error);
+        return false;
+      }
+
       return false;
     } catch (e) {
-      console.error("Erro na sincronização:", e);
-      return false;
+      console.error("Falha Crítica na Sincronização:", e);
+      // Re-lança o erro para que a UI possa mostrar a mensagem específica de "Failed to fetch"
+      throw e;
     }
   },
 
@@ -87,7 +103,7 @@ export const StorageService = {
   },
 
   saveSheetsUrl(url: string): void {
-    localStorage.setItem('google_sheets_url', url);
+    localStorage.setItem('google_sheets_url', url.trim());
   },
 
   async getTrainingPhotos(): Promise<TrainingPhoto[]> {

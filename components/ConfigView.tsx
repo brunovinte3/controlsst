@@ -45,9 +45,10 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
   };
 
   const validateAndTest = async () => {
-    if (!url.startsWith('https://script.google.com')) {
+    const cleanUrl = url.trim();
+    if (!cleanUrl.startsWith('https://script.google.com')) {
       setStatus('error');
-      setErrorMessage('URL inválida. Comece com https://script.google.com');
+      setErrorMessage('A URL deve começar com https://script.google.com');
       return;
     }
 
@@ -55,17 +56,22 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
     setErrorMessage('');
     
     try {
-      StorageService.saveSheetsUrl(url);
+      StorageService.saveSheetsUrl(cleanUrl);
       const success = await StorageService.syncWithSheets();
       if (success) {
         setStatus('success');
         onUpdate();
       } else {
-        throw new Error("Planilha vazia ou inacessível.");
+        throw new Error("O script retornou um formato inválido.");
       }
     } catch (err: any) {
+      console.error(err);
       setStatus('error');
-      setErrorMessage('Erro de permissão. Garanta que configurou "Qualquer um" no Google.');
+      if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+        setErrorMessage('ERRO DE CONEXÃO: O Google bloqueou o acesso. Você configurou "Quem pode acessar" como "Qualquer um" na implantação?');
+      } else {
+        setErrorMessage(err.message || 'Erro desconhecido ao conectar.');
+      }
     }
   };
 
@@ -74,7 +80,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
       {/* SEÇÃO PRINCIPAL - GOOGLE SHEETS */}
       <div className="bg-white p-10 rounded-[3rem] shadow-2xl shadow-emerald-900/5 border-2 border-emerald-100">
         <header className="mb-10 text-center">
-          <div className="w-24 h-24 bg-emerald-600 text-white rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl shadow-emerald-900/20 animate-bounce-short">⚡</div>
+          <div className="w-24 h-24 bg-emerald-600 text-white rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl shadow-emerald-900/20">⚡</div>
           <h2 className="text-4xl font-black text-gray-800 mb-2 tracking-tighter italic">Vincular <span className="text-emerald-600">Google Sheets</span></h2>
           <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Abaixo você configura o link para sincronizar os dados</p>
         </header>
@@ -87,23 +93,25 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
               Código do Script
             </h3>
             <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
-              Copie este código, cole no <b>Apps Script</b> da sua planilha e clique em <b>Implantar > App da Web</b>.
+              1. No Sheets: <b>Extensões > Apps Script</b><br/>
+              2. Cole este código e clique em <b>Salvar</b><br/>
+              3. Clique em <b>Implantar > Nova Implantação</b>
             </p>
             <div className="relative group">
               <pre className="bg-gray-900 text-emerald-400 p-6 rounded-3xl text-[10px] font-mono overflow-hidden h-40 border-2 border-gray-800">
                 {scriptCode}
               </pre>
               <button 
-                onClick={() => { navigator.clipboard.writeText(scriptCode); alert('Copiado! Agora cole no Google Sheets.'); }}
+                onClick={() => { navigator.clipboard.writeText(scriptCode); alert('Copiado!'); }}
                 className="absolute inset-0 w-full h-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black uppercase text-xs tracking-widest rounded-3xl"
               >
-                Clique para Copiar Código 📋
+                Copiar Código 📋
               </button>
             </div>
           </div>
 
-          {/* LADO DIREITO: CAMPO DO LINK - ONDE COLOCAR O LINK */}
-          <div className="space-y-8 bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200 shadow-xl shadow-emerald-900/5">
+          {/* LADO DIREITO: CAMPO DO LINK */}
+          <div className="space-y-8 bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200">
             <h3 className="text-lg font-black text-emerald-900 flex items-center gap-2 uppercase tracking-tighter">
               <span className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
               URL DA IMPLANTAÇÃO
@@ -111,41 +119,48 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
             
             <div className="space-y-4">
               <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-widest ml-1">
-                COLE SEU LINK AQUI (TERMINA EM /EXEC):
+                COLE O LINK QUE TERMINA EM /EXEC:
               </label>
-              <div className="relative">
-                <input 
-                  type="text" 
-                  className="w-full bg-white border-4 border-emerald-100 rounded-3xl p-6 outline-none text-sm font-mono focus:border-emerald-500 shadow-lg text-emerald-900 placeholder:opacity-30"
-                  placeholder="https://script.google.com/macros/s/.../exec"
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                />
-                {url && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-2xl">🔗</span>}
-              </div>
-
-              <div className="p-4 bg-white/60 rounded-2xl border border-emerald-100">
-                <p className="text-[10px] text-emerald-800 font-bold leading-relaxed italic">
-                  💡 <b>Dica:</b> No Google, ao implantar, lembre-se de marcar "Quem pode acessar" como <b>"Qualquer um"</b>, senão o app não conseguirá ler sua planilha.
-                </p>
-              </div>
+              <input 
+                type="text" 
+                className="w-full bg-white border-4 border-emerald-100 rounded-3xl p-6 outline-none text-sm font-mono focus:border-emerald-500 shadow-lg"
+                placeholder="https://script.google.com/macros/s/.../exec"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
 
               <button 
                 onClick={validateAndTest}
                 disabled={status === 'testing'}
-                className="w-full py-6 bg-emerald-700 text-white rounded-3xl font-black text-sm tracking-[0.2em] shadow-2xl hover:bg-emerald-800 hover:scale-[1.02] transition-all disabled:opacity-50 active:scale-95"
+                className="w-full py-6 bg-emerald-700 text-white rounded-3xl font-black text-sm tracking-[0.2em] shadow-2xl hover:scale-[1.02] transition-all disabled:opacity-50"
               >
-                {status === 'testing' ? '⌛ TESTANDO CONEXÃO...' : 'SALVAR E SINCRONIZAR 🔄'}
+                {status === 'testing' ? '⌛ TESTANDO...' : 'SALVAR E SINCRONIZAR 🔄'}
               </button>
 
               {status === 'success' && (
-                <div className="bg-green-500 text-white p-4 rounded-2xl text-center font-black text-[10px] uppercase tracking-widest animate-bounce">
-                  ✅ PLANILHA CONECTADA E SINCRONIZADA!
+                <div className="bg-green-500 text-white p-4 rounded-2xl text-center font-black text-[10px] uppercase">
+                  ✅ CONECTADO COM SUCESSO!
                 </div>
               )}
+              
               {status === 'error' && (
-                <div className="bg-red-500 text-white p-4 rounded-2xl text-center font-black text-[10px] uppercase tracking-widest">
-                  ❌ {errorMessage}
+                <div className="space-y-4">
+                  <div className="bg-red-500 text-white p-4 rounded-2xl text-center font-black text-[10px] uppercase leading-relaxed">
+                    ❌ {errorMessage}
+                  </div>
+                  
+                  {errorMessage.includes('CONEXÃO') && (
+                    <div className="p-5 bg-white rounded-2xl border-2 border-red-100 space-y-3">
+                      <p className="text-[10px] font-black text-red-600 uppercase tracking-widest">🛠️ Como resolver o "Failed to fetch":</p>
+                      <ol className="text-[11px] text-gray-600 space-y-2 font-medium">
+                        <li>1. No Google Scripts, clique em <b>Implantar</b> novamente.</li>
+                        <li>2. Escolha <b>Gerenciar Implantações</b>.</li>
+                        <li>3. Clique no <b>Lápis (Editar)</b> na versão atual.</li>
+                        <li>4. Em <b>"Quem pode acessar"</b>, mude para <b>"Qualquer um"</b> (Anyone).</li>
+                        <li>5. Clique em <b>Implantar</b> e tente salvar aqui novamente.</li>
+                      </ol>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -167,7 +182,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
             <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuário</label>
             <input 
               type="text" 
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
+              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-sm outline-none"
               value={adminProfile.username}
               onChange={e => setAdminProfile({...adminProfile, username: e.target.value})}
             />
@@ -176,7 +191,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
             <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Senha</label>
             <input 
               type="text" 
-              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
+              className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 font-bold text-sm outline-none"
               value={adminProfile.password}
               onChange={e => setAdminProfile({...adminProfile, password: e.target.value})}
             />
@@ -185,7 +200,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
             <button 
               type="submit"
               className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                isProfileSaved ? 'bg-green-600 text-white' : 'bg-blue-600 text-white shadow-xl hover:scale-[1.02]'
+                isProfileSaved ? 'bg-green-600 text-white' : 'bg-blue-600 text-white shadow-xl'
               }`}
             >
               {isProfileSaved ? 'ATUALIZADO ✅' : 'ATUALIZAR LOGIN'}
