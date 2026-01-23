@@ -1,8 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { Employee, TrainingRecord } from '../types';
-import { STATUS_CONFIG, NR_COURSES, getDeptColor } from '../constants';
-import { getDaysRemaining, calculateTrainingStatus, getExpiryDate } from '../utils/calculations';
+import { STATUS_CONFIG, NR_COURSES } from '../constants';
+import { calculateTrainingStatus, getExpiryDate } from '../utils/calculations';
 import { StorageService } from '../services/storage';
 
 interface EmployeeViewProps {
@@ -16,34 +16,32 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
   const [selectedSetor, setSelectedSetor] = useState('Todos');
   const [selectedCompany, setSelectedCompany] = useState('Todas');
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
-  const [editingPhotoId, setEditingPhotoId] = useState<string | null>(null);
-  const [tempPhotoUrl, setTempPhotoUrl] = useState('');
 
   const setores = useMemo(() => ['Todos', ...Array.from(new Set(employees.map(e => e.setor)))], [employees]);
   const companies = useMemo(() => ['Todas', ...Array.from(new Set(employees.map(e => e.company)))], [employees]);
 
   const filtered = employees.filter(e => {
-    const matchesSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         e.registration.includes(searchTerm) ||
-                         e.role.toLowerCase().includes(searchTerm.toLowerCase());
+    const name = e.name || '';
+    const registration = e.registration || '';
+    const role = e.role || '';
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         registration.includes(searchTerm) ||
+                         role.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesSetor = selectedSetor === 'Todos' || e.setor === selectedSetor;
     const matchesCompany = selectedCompany === 'Todas' || e.company === selectedCompany;
     return matchesSearch && matchesSetor && matchesCompany;
   });
 
-  const handleSavePhoto = async (emp: Employee) => {
-    const updated = { ...emp, photoUrl: tempPhotoUrl };
-    await StorageService.updateEmployee(updated);
-    setEditingPhotoId(null);
-    onUpdate();
-  };
-
   const handleSaveEdit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingEmp || !isAdmin) return;
-    await StorageService.updateEmployee(editingEmp);
-    setEditingEmp(null);
-    onUpdate();
+    try {
+      await StorageService.updateEmployee(editingEmp);
+      setEditingEmp(null);
+      onUpdate();
+    } catch (err) {
+      alert("Erro ao salvar. Verifique sua conexão.");
+    }
   };
 
   const createNewEmployee = () => {
@@ -55,6 +53,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
       role: '',
       setor: '',
       company: '',
+      photoUrl: '',
       trainings: {}
     };
     setEditingEmp(newEmp);
@@ -133,24 +132,11 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
           <div key={emp.id} className="bg-white rounded-[2.5rem] border border-gray-100 hover:border-emerald-300 transition-all shadow-sm group">
             <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="flex items-center gap-5 flex-1">
-                <div className="relative group/photo">
-                  <div className="w-16 h-16 text-white rounded-[1.8rem] flex items-center justify-center font-black text-xl shadow-lg relative overflow-hidden bg-gray-100 flex-shrink-0">
-                    {emp.photoUrl ? (
-                      <img src={emp.photoUrl} alt={emp.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <span className="relative z-10 text-emerald-600 opacity-30">{emp.name.charAt(0)}</span>
-                    )}
-                  </div>
-                  {isAdmin && (
-                    <button 
-                      onClick={() => {
-                        setEditingPhotoId(emp.id);
-                        setTempPhotoUrl(emp.photoUrl || '');
-                      }}
-                      className="absolute -top-1 -right-1 bg-white text-emerald-600 w-6 h-6 rounded-full shadow-md text-[10px] flex items-center justify-center opacity-0 group-hover/photo:opacity-100 transition-opacity border border-emerald-50"
-                    >
-                      ✏️
-                    </button>
+                <div className="w-16 h-16 text-white rounded-[1.8rem] flex items-center justify-center font-black text-xl shadow-lg relative overflow-hidden bg-emerald-50 flex-shrink-0">
+                  {emp.photoUrl ? (
+                    <img src={emp.photoUrl} alt={emp.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="relative z-10 text-emerald-600 opacity-30">{emp.name?.charAt(0) || '?'}</span>
                   )}
                 </div>
 
@@ -175,6 +161,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
                   return (
                     <div 
                       key={course.id} 
+                      title={`${course.name}: ${STATUS_CONFIG[status].label}`}
                       className={`w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-black text-white shadow-sm transition-transform hover:scale-125 cursor-help ${STATUS_CONFIG[status].color}`}
                     >
                       {course.id.replace('NR', '')}
@@ -218,6 +205,14 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
                   <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.registration} onChange={e => setEditingEmp({...editingEmp, registration: e.target.value})} />
                 </div>
                 <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">URL da Foto do Perfil</label>
+                  <input disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" placeholder="Link da imagem (https://...)" value={editingEmp.photoUrl || ''} onChange={e => setEditingEmp({...editingEmp, photoUrl: e.target.value})} />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Empresa / Unidade</label>
+                  <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.company} onChange={e => setEditingEmp({...editingEmp, company: e.target.value})} />
+                </div>
+                <div className="space-y-3">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Setor</label>
                   <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.setor} onChange={e => setEditingEmp({...editingEmp, setor: e.target.value})} />
                 </div>
@@ -228,7 +223,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
               </div>
 
               <div className="pt-10 border-t border-emerald-50">
-                <h4 className="text-xs font-black text-emerald-900 uppercase tracking-[0.3em] italic mb-6">Datas de Conclusão</h4>
+                <h4 className="text-xs font-black text-emerald-900 uppercase tracking-[0.3em] italic mb-6">Datas de Conclusão de Treinamentos</h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                   {NR_COURSES.map(course => (
                     <div key={course.id} className="bg-emerald-50/30 p-4 rounded-2xl border border-emerald-100">

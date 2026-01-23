@@ -1,10 +1,8 @@
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
-import { Employee, TrainingRecord, TrainingPhoto } from '../types';
+import { Employee, TrainingRecord } from '../types';
 import { getDeptColor } from '../constants';
-import { getDaysRemaining } from '../utils/calculations';
-import { StorageService } from '../services/storage';
 
 interface DashboardProps {
   employees: Employee[];
@@ -28,13 +26,6 @@ const CustomTooltip = ({ active, payload }: any) => {
 
 const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
   const [selectedCompany, setSelectedCompany] = useState<string>('Todas');
-  const [photos, setPhotos] = useState<TrainingPhoto[]>([]);
-  const [currentPhotoIdx, setCurrentPhotoIdx] = useState(0);
-  const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
-
-  useEffect(() => {
-    StorageService.getTrainingPhotos().then(setPhotos);
-  }, []);
 
   const stats = useMemo(() => {
     const s = { trained: 0, expiring: 0, expired: 0 };
@@ -42,8 +33,12 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
     const filtered = selectedCompany === 'Todas' ? employees : employees.filter(e => e.company === selectedCompany);
 
     filtered.forEach(emp => {
-      setorStats[emp.setor] = (setorStats[emp.setor] || 0) + 1;
-      Object.entries(emp.trainings).forEach(([cid, t]) => {
+      // Contador de setores
+      const setorNome = emp.setor || 'Não Definido';
+      setorStats[setorNome] = (setorStats[setorNome] || 0) + 1;
+
+      // Contador de treinamentos
+      Object.entries(emp.trainings || {}).forEach(([_, t]) => {
         const record = t as TrainingRecord;
         if (record.status === 'VALID') s.trained++;
         else if (record.status === 'EXPIRING') s.expiring++;
@@ -88,7 +83,7 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
           { label: 'Cursos Vencidos', val: stats.s.expired, color: 'text-red-600', bg: 'bg-red-50', icon: '🚨' },
           { label: 'Colaboradores Ativos', val: stats.filteredCount, color: 'text-blue-600', bg: 'bg-blue-50', icon: '👷' },
         ].map((item, i) => (
-          <div key={i} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100">
+          <div key={i} className="bg-white p-6 rounded-[2.5rem] shadow-sm border border-gray-100 transition-all hover:scale-105">
             <div className="flex justify-between items-start">
               <span className={`text-2xl p-4 rounded-2xl ${item.bg}`}>{item.icon}</span>
               <span className={`text-5xl font-black tracking-tighter ${item.color}`}>{item.val}</span>
@@ -100,7 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-8 rounded-[3.5rem] shadow-sm border border-gray-100">
-           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Status dos Treinamentos</h3>
+           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 text-center">Status Global dos Treinamentos</h3>
            <ResponsiveContainer width="100%" height={300}>
              <PieChart>
                <Pie data={stats.statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
@@ -111,10 +106,10 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
            </ResponsiveContainer>
         </div>
         <div className="bg-white p-8 rounded-[3.5rem] shadow-sm border border-gray-100">
-           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6">Colaboradores por Setor</h3>
+           <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 text-center">Colaboradores por Setor</h3>
            <ResponsiveContainer width="100%" height={300}>
              <PieChart>
-               <Pie data={stats.setorData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+               <Pie data={stats.setorData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="name">
                  {stats.setorData.map((e, i) => <Cell key={i} fill={getDeptColor(e.name)} />)}
                </Pie>
                <Tooltip content={<CustomTooltip />} />

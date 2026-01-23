@@ -47,17 +47,24 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FDFDFD]">
       <nav className="w-full md:w-80 bg-[#064E3B] text-white flex flex-col no-print shadow-2xl z-50">
-        <div className="p-8 border-b border-green-800/50">
-          <div className="flex items-center gap-3 mb-2">
-            <div className="bg-orange-500 w-12 h-12 rounded-2xl shadow-lg flex items-center justify-center border-2 border-orange-400/30">
-               <span className="text-2xl">⛑️</span>
+        {/* LOGO UNIFICADA COM O LOGIN */}
+        <div className="p-10 border-b border-green-800/50">
+          <header className="flex flex-col items-center md:items-start">
+            <div className="relative w-16 h-16 mb-4">
+              <div className="absolute inset-0 bg-orange-500 rounded-2xl shadow-lg rotate-3 opacity-20"></div>
+              <div className="relative w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center text-3xl shadow-xl border-b-2 border-orange-600">
+                <span>⛑️</span>
+              </div>
             </div>
-            <h1 className="text-2xl font-black tracking-tighter italic">
+
+            <h1 className="text-3xl font-black tracking-tighter leading-none italic">
               <span className="text-white">Control</span>
               <span className="text-emerald-400">SST</span>
             </h1>
-          </div>
-          <p className="text-[9px] text-emerald-300/40 font-black uppercase tracking-[0.2em] mt-3 italic">Cloud Management</p>
+            <p className="text-[8px] text-emerald-300/40 font-black uppercase tracking-[0.2em] mt-2 italic">
+              Gestão Profissional de SST
+            </p>
+          </header>
         </div>
 
         <div className="flex-1 py-8 px-4 space-y-2 overflow-y-auto">
@@ -104,8 +111,12 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
               </p>
             </div>
           </div>
-          <button onClick={onLogout} className="w-full py-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20">
-            Sair 🚪
+          
+          <button 
+            onClick={onLogout} 
+            className="w-full py-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20 flex items-center justify-center gap-2"
+          >
+            Sair do Painel 🚪
           </button>
         </div>
       </nav>

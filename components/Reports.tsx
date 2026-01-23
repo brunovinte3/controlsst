@@ -19,8 +19,6 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
     period: 'all' as 'all' | '15' | '30' | '60' | '90' | 'expired',
   });
 
-  const [isConfigOpen, setIsConfigOpen] = useState(false);
-
   const companies = useMemo(() => Array.from(new Set(employees.map(e => e.company))), [employees]);
   const setores = useMemo(() => Array.from(new Set(employees.map(e => e.setor))), [employees]);
 
@@ -60,24 +58,31 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
       </div>
 
       <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-emerald-50 no-print space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div>
             <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Empresa</label>
-            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs" value={filters.company} onChange={e => setFilters({...filters, company: e.target.value})}>
+            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" value={filters.company} onChange={e => setFilters({...filters, company: e.target.value})}>
               <option value="">Todas</option>
               {companies.map(c => <option key={c} value={c}>{c}</option>)}
             </select>
           </div>
           <div>
+            <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Treinamento (NR)</label>
+            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" value={filters.course} onChange={e => setFilters({...filters, course: e.target.value})}>
+              <option value="">Todas as NRs</option>
+              {NR_COURSES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div>
             <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Setor</label>
-            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs" value={filters.setor} onChange={e => setFilters({...filters, setor: e.target.value})}>
+            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" value={filters.setor} onChange={e => setFilters({...filters, setor: e.target.value})}>
               <option value="">Todos</option>
               {setores.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
             <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Estado</label>
-            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs" value={filters.status} onChange={e => setFilters({...filters, status: e.target.value as any})}>
+            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" value={filters.status} onChange={e => setFilters({...filters, status: e.target.value as any})}>
               <option value="">Todos os Status</option>
               <option value="VALID">Válidos</option>
               <option value="EXPIRING">Vencendo</option>
@@ -86,7 +91,7 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
           </div>
           <div>
             <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Pesquisa</label>
-            <input type="text" className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs" placeholder="Nome ou RE..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} />
+            <input type="text" className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" placeholder="Nome ou RE..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} />
           </div>
         </div>
       </div>
