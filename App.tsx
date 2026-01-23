@@ -34,6 +34,12 @@ const App: React.FC = () => {
   useEffect(() => {
     if (userRole) {
       loadData();
+      // Auto-sync ao abrir se tiver URL configurada
+      if (isAdmin && StorageService.getSheetsUrl()) {
+        StorageService.syncWithSheets().then(success => {
+          if (success) loadData();
+        });
+      }
     }
   }, [userRole]);
 
@@ -41,8 +47,8 @@ const App: React.FC = () => {
     if (!isAdmin) return;
     setIsLoading(true);
     try {
-      const updated = await StorageService.addEmployees(data);
-      setEmployees(updated);
+      await StorageService.saveEmployees(data);
+      await loadData();
       setActiveTab('dashboard');
     } catch (error) {
       alert("Erro ao salvar dados.");
@@ -60,7 +66,7 @@ const App: React.FC = () => {
       return (
         <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
           <div className="w-12 h-12 border-4 border-green-100 border-t-green-600 rounded-full animate-spin"></div>
-          <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">Carregando Banco SST...</p>
+          <p className="text-gray-400 font-black uppercase text-[10px] tracking-widest">Acessando Nuvem SST...</p>
         </div>
       );
     }
@@ -76,7 +82,7 @@ const App: React.FC = () => {
            <div className="max-w-6xl mx-auto bg-white p-8 rounded-[2.5rem] border border-gray-100 flex items-center justify-between shadow-sm">
              <div>
                 <h4 className="font-black text-gray-800">Cópia de Segurança (Backup)</h4>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Baixe todos os dados para o seu computador</p>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Baixe todos os dados locais do navegador</p>
              </div>
              <button 
                 onClick={() => StorageService.downloadBackup()}
@@ -98,6 +104,7 @@ const App: React.FC = () => {
       setActiveTab={setActiveTab} 
       userRole={userRole} 
       onLogout={() => setUserRole(null)}
+      onRefreshData={loadData}
     >
       {renderContent()}
     </Layout>

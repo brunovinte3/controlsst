@@ -1,6 +1,7 @@
 
 import { Employee, AdminProfile, CompanyProfile, TrainingPhoto } from '../types';
 import { supabase } from './supabase';
+import { formatEmployeeData } from '../utils/calculations';
 
 const DEFAULT_ADMIN: AdminProfile = {
   username: 'Bruno',
@@ -20,24 +21,19 @@ export const StorageService = {
   async getAppSettings(): Promise<{ company: CompanyProfile, admin: AdminProfile }> {
     try {
       const { data, error } = await supabase.from('app_settings').select('*');
-      if (error) {
-        console.error("Erro Supabase (app_settings):", error.message);
-        return { company: DEFAULT_COMPANY, admin: DEFAULT_ADMIN };
-      }
+      if (error) return { company: DEFAULT_COMPANY, admin: DEFAULT_ADMIN };
       
       const company = data?.find(i => i.key === 'company_profile')?.value || DEFAULT_COMPANY;
       const admin = data?.find(i => i.key === 'admin_profile')?.value || DEFAULT_ADMIN;
       
       return { company, admin };
     } catch (e) {
-      console.error("Falha crítica ao buscar configurações:", e);
       return { company: DEFAULT_COMPANY, admin: DEFAULT_ADMIN };
     }
   },
 
   async updateAppSetting(key: 'company_profile' | 'admin_profile', value: any) {
-    const { error } = await supabase.from('app_settings').upsert({ key, value });
-    if (error) console.error("Erro ao salvar configuração:", error.message);
+    await supabase.from('app_settings').upsert({ key, value });
   },
 
   async updateCompanyProfile(company: CompanyProfile) {
@@ -49,95 +45,68 @@ export const StorageService = {
   },
 
   async getEmployees(): Promise<Employee[]> {
-    try {
-      const { data, error } = await supabase
-        .from('employees')
-        .select('*')
-        .order('name', { ascending: true });
-        
-      if (error) {
-        console.error("Erro Supabase (employees):", error.message);
-        return [];
-      }
-      return (data || []).map(item => ({
-          ...item,
-          trainings: item.trainings || {}
-      }));
-    } catch (e) {
-      console.error("Falha ao buscar funcionários:", e);
-      return [];
-    }
+    const { data, error } = await supabase.from('employees').select('*').order('name');
+    if (error) return [];
+    return (data || []).map(item => ({ ...item, trainings: item.trainings || {} }));
   },
 
   async saveEmployees(employees: Employee[]): Promise<void> {
     if (!employees.length) return;
-    
-    // Otimização: Envia todos de uma vez (Batch Upsert)
-    const { error } = await supabase
-      .from('employees')
-      .upsert(employees, { onConflict: 'id' });
+    const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
+    if (error) throw error;
+  },
+
+  // Added updateEmployee method to fix property missing error in components/EmployeeView.tsx
+  // This helper wraps saveEmployees to handle single employee updates via upsert.
+  async updateEmployee(employee: Employee): Promise<void> {
+    return this.saveEmployees([employee]);
+  },
+
+  async syncWithSheets(): Promise<boolean> {
+    const url = this.getSheetsUrl();
+    if (!url) return false;
+
+    try {
+      const response = await fetch(url, { cache: 'no-store' });
+      const data = await response.json();
       
-    if (error) {
-      console.error("Erro crítico ao salvar lote de funcionários:", error.message);
-      throw new Error(error.message);
+      if (Array.isArray(data)) {
+        const formatted = formatEmployeeData(data);
+        await this.saveEmployees(formatted);
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.error("Erro na sincronização:", e);
+      return false;
     }
   },
 
-  async addEmployees(newEmployees: Employee[]): Promise<Employee[]> {
-    await this.saveEmployees(newEmployees);
-    return this.getEmployees();
+  getSheetsUrl(): string | null {
+    return localStorage.getItem('google_sheets_url');
   },
 
-  async updateEmployee(updatedEmp: Employee): Promise<Employee[]> {
-    const { error } = await supabase.from('employees').upsert(updatedEmp);
-    if (error) console.error("Erro ao atualizar funcionário:", error.message);
-    return this.getEmployees();
-  },
-
-  async deleteEmployee(id: string): Promise<Employee[]> {
-    const { error } = await supabase.from('employees').delete().eq('id', id);
-    if (error) console.error("Erro ao deletar funcionário:", error.message);
-    return this.getEmployees();
+  saveSheetsUrl(url: string): void {
+    localStorage.setItem('google_sheets_url', url);
   },
 
   async getTrainingPhotos(): Promise<TrainingPhoto[]> {
-    const { data, error } = await supabase.from('training_photos').select('*');
-    if (error) {
-      console.error("Erro Supabase (photos):", error.message);
-      return [];
-    }
+    const { data } = await supabase.from('training_photos').select('*');
     return data || [];
   },
 
   async saveTrainingPhotos(photos: TrainingPhoto[]): Promise<void> {
     for (const photo of photos) {
-      const { error } = await supabase.from('training_photos').upsert(photo);
-      if (error) console.error("Erro ao salvar foto:", error.message);
+      await supabase.from('training_photos').upsert(photo);
     }
   },
 
   async removeTrainingPhoto(id: string): Promise<void> {
-    const { error } = await supabase.from('training_photos').delete().eq('id', id);
-    if (error) console.error("Erro ao remover foto:", error.message);
+    await supabase.from('training_photos').delete().eq('id', id);
   },
 
-  getAdminProfile(): AdminProfile {
-    return DEFAULT_ADMIN;
-  },
-
-  getCompanyProfile(): CompanyProfile {
-    return DEFAULT_COMPANY;
-  },
-
-  // Fix: Added missing method getSheetsUrl used in ConfigView.tsx
-  getSheetsUrl(): string | null {
-    return localStorage.getItem('google_sheets_url');
-  },
-
-  // Fix: Added missing method saveSheetsUrl used in ConfigView.tsx
-  saveSheetsUrl(url: string): void {
-    localStorage.setItem('google_sheets_url', url);
-  },
+  getAdminProfile(): AdminProfile { return DEFAULT_ADMIN; },
+  getCompanyProfile(): CompanyProfile { return DEFAULT_COMPANY; },
 
   async downloadBackup() {
     const data = await this.getEmployees();
