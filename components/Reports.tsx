@@ -1,9 +1,8 @@
 
 import React, { useState, useMemo } from 'react';
-import { Employee, TrainingStatus, TrainingRecord, CompanyProfile } from '../types';
+import { Employee, TrainingStatus, TrainingRecord } from '../types';
 import { NR_COURSES, STATUS_CONFIG } from '../constants';
 import { getDaysRemaining } from '../utils/calculations';
-import { StorageService } from '../services/storage';
 
 interface ReportsProps {
   employees: Employee[];
@@ -52,7 +51,7 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
       <div className="flex justify-between items-center no-print">
         <div>
           <h2 className="text-3xl font-black text-gray-800 tracking-tighter italic">Auditoria <span className="text-emerald-600">Normativa</span></h2>
-          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Relatórios Gerenciais ControlSST</p>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 italic">Relatórios Gerenciais ControlSST</p>
         </div>
         <button onClick={() => window.print()} className="bg-[#064E3B] text-emerald-400 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">🖨️ Exportar PDF</button>
       </div>

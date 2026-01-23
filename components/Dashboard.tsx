@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 import { Employee, TrainingRecord } from '../types';
 import { getDeptColor } from '../constants';
@@ -34,7 +34,7 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
 
     filtered.forEach(emp => {
       // Contador de setores
-      const setorNome = emp.setor || 'Não Definido';
+      const setorNome = emp.setor || 'Geral';
       setorStats[setorNome] = (setorStats[setorNome] || 0) + 1;
 
       // Contador de treinamentos
@@ -70,7 +70,11 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
           <p className="text-gray-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-1 italic">Gestão Inteligente de SST</p>
         </div>
         <div className="bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
-          <select value={selectedCompany} onChange={(e) => setSelectedCompany(e.target.value)} className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-xs font-black outline-none border-none">
+          <select 
+            value={selectedCompany} 
+            onChange={(e) => setSelectedCompany(e.target.value)} 
+            className="bg-emerald-50 text-emerald-700 px-4 py-2 rounded-xl text-xs font-black outline-none border-none"
+          >
             {companies.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
@@ -96,25 +100,29 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white p-8 rounded-[3.5rem] shadow-sm border border-gray-100">
            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 text-center">Status Global dos Treinamentos</h3>
-           <ResponsiveContainer width="100%" height={300}>
-             <PieChart>
-               <Pie data={stats.statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
-                 {stats.statusData.map((e, i) => <Cell key={i} fill={e.color} />)}
-               </Pie>
-               <Tooltip content={<CustomTooltip />} />
-             </PieChart>
-           </ResponsiveContainer>
+           <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={stats.statusData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value">
+                  {stats.statusData.map((e, i) => <Cell key={i} fill={e.color} />)}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+           </div>
         </div>
         <div className="bg-white p-8 rounded-[3.5rem] shadow-sm border border-gray-100">
            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-6 text-center">Colaboradores por Setor</h3>
-           <ResponsiveContainer width="100%" height={300}>
-             <PieChart>
-               <Pie data={stats.setorData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="name">
-                 {stats.setorData.map((e, i) => <Cell key={i} fill={getDeptColor(e.name)} />)}
-               </Pie>
-               <Tooltip content={<CustomTooltip />} />
-             </PieChart>
-           </ResponsiveContainer>
+           <div className="h-[300px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={stats.setorData} cx="50%" cy="50%" innerRadius={60} outerRadius={100} paddingAngle={5} dataKey="value" nameKey="name">
+                  {stats.setorData.map((e, i) => <Cell key={i} fill={getDeptColor(e.name)} />)}
+                </Pie>
+                <Tooltip content={<CustomTooltip />} />
+              </PieChart>
+            </ResponsiveContainer>
+           </div>
         </div>
       </div>
     </div>

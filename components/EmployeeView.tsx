@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { Employee, TrainingRecord } from '../types';
+import { Employee } from '../types';
 import { STATUS_CONFIG, NR_COURSES } from '../constants';
 import { calculateTrainingStatus, getExpiryDate } from '../utils/calculations';
 import { StorageService } from '../services/storage';
@@ -97,33 +97,19 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
       <div className="bg-white p-6 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col md:flex-row gap-6">
         <div className="flex-1 min-w-[200px]">
           <label className="text-[9px] font-black text-gray-400 uppercase ml-1 mb-2 block tracking-widest italic">Empresa</label>
-          <select 
-            value={selectedCompany}
-            onChange={(e) => setSelectedCompany(e.target.value)}
-            className="w-full bg-emerald-50/50 border-2 border-transparent px-4 py-3 rounded-2xl text-xs font-black text-emerald-700 outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner"
-          >
+          <select value={selectedCompany} onChange={(e) => setSelectedCompany(e.target.value)} className="w-full bg-emerald-50/50 border-2 border-transparent px-4 py-3 rounded-2xl text-xs font-black text-emerald-700 outline-none shadow-inner">
             {companies.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div className="flex-1 min-w-[200px]">
           <label className="text-[9px] font-black text-gray-400 uppercase ml-1 mb-2 block tracking-widest italic">Setor</label>
-          <select 
-            value={selectedSetor}
-            onChange={(e) => setSelectedSetor(e.target.value)}
-            className="w-full bg-emerald-50/50 border-2 border-transparent px-4 py-3 rounded-2xl text-xs font-black text-emerald-700 outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner"
-          >
+          <select value={selectedSetor} onChange={(e) => setSelectedSetor(e.target.value)} className="w-full bg-emerald-50/50 border-2 border-transparent px-4 py-3 rounded-2xl text-xs font-black text-emerald-700 outline-none shadow-inner">
             {setores.map(s => <option key={s} value={s}>{s}</option>)}
           </select>
         </div>
         <div className="flex-[2] min-w-[300px]">
           <label className="text-[9px] font-black text-gray-400 uppercase ml-1 mb-2 block tracking-widest italic">Filtro Rápido</label>
-          <input 
-            type="text" 
-            placeholder="Nome, RE ou Função..." 
-            className="w-full px-5 py-3 bg-emerald-50/50 border-2 border-transparent rounded-2xl text-xs font-bold focus:bg-white focus:border-emerald-500 outline-none transition-all shadow-inner"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <input type="text" placeholder="Nome, RE ou Função..." className="w-full px-5 py-3 bg-emerald-50/50 border-2 border-transparent rounded-2xl text-xs font-bold shadow-inner outline-none focus:bg-white focus:border-emerald-500 transition-all" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
       </div>
 
@@ -131,8 +117,8 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
         {filtered.map(emp => (
           <div key={emp.id} className="bg-white rounded-[2.5rem] border border-gray-100 hover:border-emerald-300 transition-all shadow-sm group">
             <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="flex items-center gap-5 flex-1">
-                <div className="w-16 h-16 text-white rounded-[1.8rem] flex items-center justify-center font-black text-xl shadow-lg relative overflow-hidden bg-emerald-50 flex-shrink-0">
+              <div className="flex items-center gap-5 flex-1 min-w-0">
+                <div className="w-16 h-16 text-white rounded-[1.8rem] flex items-center justify-center font-black text-xl shadow-lg relative overflow-hidden bg-emerald-50 flex-shrink-0 border border-emerald-100">
                   {emp.photoUrl ? (
                     <img src={emp.photoUrl} alt={emp.name} className="w-full h-full object-cover" />
                   ) : (
@@ -171,10 +157,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
               </div>
 
               <div className="flex gap-3 flex-shrink-0">
-                <button 
-                  onClick={() => setEditingEmp(emp)}
-                  className="bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] hover:bg-emerald-600 hover:text-white transition-all shadow-sm"
-                >
+                <button onClick={() => setEditingEmp(emp)} className="bg-emerald-50 text-emerald-700 px-6 py-3 rounded-2xl text-[9px] font-black uppercase tracking-[0.1em] hover:bg-emerald-600 hover:text-white transition-all shadow-sm">
                   {isAdmin ? 'Editar Cadastro 📝' : 'Visualizar Ficha 👁️'}
                 </button>
               </div>
@@ -196,27 +179,28 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
 
             <form onSubmit={handleSaveEdit} className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Nome Completo</label>
                   <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.name} onChange={e => setEditingEmp({...editingEmp, name: e.target.value})} />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Matrícula</label>
                   <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.registration} onChange={e => setEditingEmp({...editingEmp, registration: e.target.value})} />
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">URL da Foto do Perfil</label>
-                  <input disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" placeholder="Link da imagem (https://...)" value={editingEmp.photoUrl || ''} onChange={e => setEditingEmp({...editingEmp, photoUrl: e.target.value})} />
+                {/* NOVO CAMPO DE FOTO */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Link da Foto (URL)</label>
+                  <input disabled={!isAdmin} type="text" placeholder="https://exemplo.com/foto.jpg" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.photoUrl || ''} onChange={e => setEditingEmp({...editingEmp, photoUrl: e.target.value})} />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Empresa / Unidade</label>
                   <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.company} onChange={e => setEditingEmp({...editingEmp, company: e.target.value})} />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Setor</label>
                   <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.setor} onChange={e => setEditingEmp({...editingEmp, setor: e.target.value})} />
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-2 italic">Função</label>
                   <input required disabled={!isAdmin} type="text" className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-[1.5rem] p-4 font-black text-sm outline-none shadow-inner" value={editingEmp.role} onChange={e => setEditingEmp({...editingEmp, role: e.target.value})} />
                 </div>

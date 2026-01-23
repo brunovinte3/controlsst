@@ -47,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-[#FDFDFD]">
       <nav className="w-full md:w-80 bg-[#064E3B] text-white flex flex-col no-print shadow-2xl z-50">
-        {/* LOGO UNIFICADA COM O LOGIN */}
+        {/* LOGO IDENTICA AO LOGIN */}
         <div className="p-10 border-b border-green-800/50">
           <header className="flex flex-col items-center md:items-start">
             <div className="relative w-16 h-16 mb-4">
@@ -106,7 +106,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
               <p className="text-[10px] font-black uppercase text-emerald-400 truncate tracking-widest">
                 {isAdmin ? config.admin.username : 'Visitante'}
               </p>
-              <p className="text-[8px] font-bold text-emerald-300/40 uppercase tracking-tighter">
+              <p className="text-[8px] font-bold text-emerald-300/40 uppercase tracking-tighter truncate">
                 {isAdmin ? 'Controle Total' : 'Modo Leitura'}
               </p>
             </div>
@@ -114,7 +114,7 @@ const Layout: React.FC<LayoutProps> = ({ children, activeTab, setActiveTab, user
           
           <button 
             onClick={onLogout} 
-            className="w-full py-4 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-red-500/10 hover:bg-red-50 text-red-500 hover:text-white rounded-2xl text-[9px] font-black uppercase tracking-[0.2em] transition-all border border-red-500/20 flex items-center justify-center gap-2"
           >
             Sair do Painel 🚪
           </button>
