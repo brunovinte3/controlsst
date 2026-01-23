@@ -47,7 +47,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
   const validateAndTest = async () => {
     if (!url.startsWith('https://script.google.com')) {
       setStatus('error');
-      setErrorMessage('URL inválida. Deve começar com https://script.google.com');
+      setErrorMessage('URL inválida. Comece com https://script.google.com');
       return;
     }
 
@@ -61,82 +61,104 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         setStatus('success');
         onUpdate();
       } else {
-        throw new Error("A planilha não retornou dados. Verifique se há conteúdo nela.");
+        throw new Error("Planilha vazia ou inacessível.");
       }
     } catch (err: any) {
       setStatus('error');
-      setErrorMessage('Erro de conexão. Verifique se você configurou "Quem pode acessar" como "Qualquer um" no Google.');
+      setErrorMessage('Erro de permissão. Garanta que configurou "Qualquer um" no Google.');
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto animate-fadeIn space-y-12 pb-20">
-      <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100">
+      {/* SEÇÃO PRINCIPAL - GOOGLE SHEETS */}
+      <div className="bg-white p-10 rounded-[3rem] shadow-2xl shadow-emerald-900/5 border-2 border-emerald-100">
         <header className="mb-10 text-center">
-          <div className="w-20 h-20 bg-green-100 text-green-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">☁️</div>
-          <h2 className="text-3xl font-black text-gray-800 mb-2 tracking-tighter">Planilha como <span className="text-green-600 italic">Banco de Dados</span></h2>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Sincronização em Tempo Real com Google Sheets</p>
+          <div className="w-24 h-24 bg-emerald-600 text-white rounded-full flex items-center justify-center text-4xl mx-auto mb-6 shadow-xl shadow-emerald-900/20 animate-bounce-short">⚡</div>
+          <h2 className="text-4xl font-black text-gray-800 mb-2 tracking-tighter italic">Vincular <span className="text-emerald-600">Google Sheets</span></h2>
+          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Abaixo você configura o link para sincronizar os dados</p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
+          {/* LADO ESQUERDO: CÓDIGO */}
+          <div className="space-y-6 bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100">
             <h3 className="text-lg font-black text-gray-800 flex items-center gap-2 uppercase tracking-tighter">
-              <span className="text-green-500">1.</span> Copiar este Código
+              <span className="w-8 h-8 bg-gray-800 text-white rounded-lg flex items-center justify-center text-xs">1</span>
+              Código do Script
             </h3>
-            <p className="text-[11px] text-gray-500 leading-relaxed italic">
-              Clique no botão abaixo para copiar o script que deve ser colado no Google Sheets (Extensões > Apps Script).
+            <p className="text-[11px] text-gray-500 leading-relaxed font-medium">
+              Copie este código, cole no <b>Apps Script</b> da sua planilha e clique em <b>Implantar > App da Web</b>.
             </p>
             <div className="relative group">
-              <pre className="bg-gray-900 text-green-400 p-6 rounded-3xl text-[10px] font-mono overflow-hidden h-48 border-2 border-gray-800 group-hover:border-green-500 transition-all">
+              <pre className="bg-gray-900 text-emerald-400 p-6 rounded-3xl text-[10px] font-mono overflow-hidden h-40 border-2 border-gray-800">
                 {scriptCode}
               </pre>
               <button 
-                onClick={() => { navigator.clipboard.writeText(scriptCode); alert('Script copiado com sucesso!'); }}
-                className="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform"
+                onClick={() => { navigator.clipboard.writeText(scriptCode); alert('Copiado! Agora cole no Google Sheets.'); }}
+                className="absolute inset-0 w-full h-full bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-black uppercase text-xs tracking-widest rounded-3xl"
               >
-                Copiar Script 📋
+                Clique para Copiar Código 📋
               </button>
             </div>
           </div>
 
-          <div className="space-y-6">
-            <h3 className="text-lg font-black text-gray-800 flex items-center gap-2 uppercase tracking-tighter">
-              <span className="text-green-500">2.</span> Publicar "App da Web"
+          {/* LADO DIREITO: CAMPO DO LINK - ONDE COLOCAR O LINK */}
+          <div className="space-y-8 bg-emerald-50 p-8 rounded-[2.5rem] border-2 border-emerald-200 shadow-xl shadow-emerald-900/5">
+            <h3 className="text-lg font-black text-emerald-900 flex items-center gap-2 uppercase tracking-tighter">
+              <span className="w-8 h-8 bg-emerald-600 text-white rounded-lg flex items-center justify-center text-xs">2</span>
+              URL DA IMPLANTAÇÃO
             </h3>
-            <div className="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100 space-y-3">
-              <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">⚠️ Importante no Google Sheets:</p>
-              <ul className="text-[11px] text-emerald-700 space-y-2 font-medium">
-                <li>• Clique em <b>Implantar</b> &gt; <b>Nova Implantação</b></li>
-                <li>• Tipo: Escolha <b>"App da Web"</b></li>
-                <li>• Quem pode acessar: Escolha <b>"Qualquer um"</b></li>
-                <li>• Copie a URL gerada e cole abaixo:</li>
-              </ul>
-              <input 
-                type="text" 
-                className="w-full bg-white border-2 border-emerald-200 rounded-2xl p-4 outline-none text-sm font-mono focus:border-green-500 shadow-sm"
-                placeholder="https://script.google.com/macros/s/.../exec"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-              />
+            
+            <div className="space-y-4">
+              <label className="block text-[10px] font-black text-emerald-700 uppercase tracking-widest ml-1">
+                COLE SEU LINK AQUI (TERMINA EM /EXEC):
+              </label>
+              <div className="relative">
+                <input 
+                  type="text" 
+                  className="w-full bg-white border-4 border-emerald-100 rounded-3xl p-6 outline-none text-sm font-mono focus:border-emerald-500 shadow-lg text-emerald-900 placeholder:opacity-30"
+                  placeholder="https://script.google.com/macros/s/.../exec"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                />
+                {url && <span className="absolute right-6 top-1/2 -translate-y-1/2 text-2xl">🔗</span>}
+              </div>
+
+              <div className="p-4 bg-white/60 rounded-2xl border border-emerald-100">
+                <p className="text-[10px] text-emerald-800 font-bold leading-relaxed italic">
+                  💡 <b>Dica:</b> No Google, ao implantar, lembre-se de marcar "Quem pode acessar" como <b>"Qualquer um"</b>, senão o app não conseguirá ler sua planilha.
+                </p>
+              </div>
+
               <button 
                 onClick={validateAndTest}
                 disabled={status === 'testing'}
-                className="w-full py-5 bg-[#064E3B] text-green-400 rounded-2xl font-black text-xs tracking-widest shadow-xl hover:scale-[1.01] transition-all disabled:opacity-50"
+                className="w-full py-6 bg-emerald-700 text-white rounded-3xl font-black text-sm tracking-[0.2em] shadow-2xl hover:bg-emerald-800 hover:scale-[1.02] transition-all disabled:opacity-50 active:scale-95"
               >
-                {status === 'testing' ? 'CONECTANDO...' : 'SALVAR URL E SINCRONIZAR 🔄'}
+                {status === 'testing' ? '⌛ TESTANDO CONEXÃO...' : 'SALVAR E SINCRONIZAR 🔄'}
               </button>
-              {status === 'success' && <p className="text-center text-[10px] font-black text-green-600 uppercase animate-bounce">✅ Planilha conectada com sucesso!</p>}
-              {status === 'error' && <p className="text-center text-[10px] font-black text-red-500 uppercase">❌ {errorMessage}</p>}
+
+              {status === 'success' && (
+                <div className="bg-green-500 text-white p-4 rounded-2xl text-center font-black text-[10px] uppercase tracking-widest animate-bounce">
+                  ✅ PLANILHA CONECTADA E SINCRONIZADA!
+                </div>
+              )}
+              {status === 'error' && (
+                <div className="bg-red-500 text-white p-4 rounded-2xl text-center font-black text-[10px] uppercase tracking-widest">
+                  ❌ {errorMessage}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
+      {/* PERFIL ADMIN */}
       <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100">
         <header className="mb-10">
           <h2 className="text-2xl font-black text-gray-800 flex items-center gap-3">
             <span className="w-10 h-10 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center text-xl">👤</span>
-            Perfil do Administrador
+            Acesso Administrativo
           </h2>
         </header>
 
@@ -166,7 +188,7 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
                 isProfileSaved ? 'bg-green-600 text-white' : 'bg-blue-600 text-white shadow-xl hover:scale-[1.02]'
               }`}
             >
-              {isProfileSaved ? 'SALVO ✅' : 'SALVAR PERFIL'}
+              {isProfileSaved ? 'ATUALIZADO ✅' : 'ATUALIZAR LOGIN'}
             </button>
           </div>
         </form>
