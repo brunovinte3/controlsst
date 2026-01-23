@@ -23,7 +23,6 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
     const json = rows.map(row => {
       const obj = {};
       headers.forEach((header, i) => {
-        // Remove espaços e acentos dos nomes das colunas
         const cleanHeader = header.toString().trim();
         obj[cleanHeader] = row[i];
       });
@@ -46,27 +45,27 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
   };
 
   const validateAndTest = async () => {
-    if (!url.includes('script.google.com')) {
+    if (!url.startsWith('https://script.google.com')) {
       setStatus('error');
-      setErrorMessage('A URL fornecida não é um link válido do Google Scripts.');
+      setErrorMessage('URL inválida. Deve começar com https://script.google.com');
       return;
     }
 
     setStatus('testing');
     setErrorMessage('');
-    StorageService.saveSheetsUrl(url);
-
+    
     try {
+      StorageService.saveSheetsUrl(url);
       const success = await StorageService.syncWithSheets();
       if (success) {
         setStatus('success');
         onUpdate();
       } else {
-        throw new Error("O script não retornou dados válidos.");
+        throw new Error("A planilha não retornou dados. Verifique se há conteúdo nela.");
       }
     } catch (err: any) {
       setStatus('error');
-      setErrorMessage(err.message || 'Falha ao acessar o Script.');
+      setErrorMessage('Erro de conexão. Verifique se você configurou "Quem pode acessar" como "Qualquer um" no Google.');
     }
   };
 
@@ -76,41 +75,45 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
         <header className="mb-10 text-center">
           <div className="w-20 h-20 bg-green-100 text-green-600 rounded-3xl flex items-center justify-center text-3xl mx-auto mb-4">☁️</div>
           <h2 className="text-3xl font-black text-gray-800 mb-2 tracking-tighter">Planilha como <span className="text-green-600 italic">Banco de Dados</span></h2>
-          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Use o Google Sheets para gerenciar seus dados online</p>
+          <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest italic">Sincronização em Tempo Real com Google Sheets</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <div className="space-y-6">
             <h3 className="text-lg font-black text-gray-800 flex items-center gap-2 uppercase tracking-tighter">
-              <span className="text-green-500">1.</span> Configurar Google Script
+              <span className="text-green-500">1.</span> Copiar este Código
             </h3>
-            <p className="text-[11px] text-gray-500 leading-relaxed">
-              No seu Google Sheets, vá em <b>Extensões > Apps Script</b>. Cole o código abaixo, clique em <b>Implantar > Nova Implantação</b>. Escolha "App da Web" e configure o acesso para "Qualquer um".
+            <p className="text-[11px] text-gray-500 leading-relaxed italic">
+              Clique no botão abaixo para copiar o script que deve ser colado no Google Sheets (Extensões > Apps Script).
             </p>
             <div className="relative group">
               <pre className="bg-gray-900 text-green-400 p-6 rounded-3xl text-[10px] font-mono overflow-hidden h-48 border-2 border-gray-800 group-hover:border-green-500 transition-all">
                 {scriptCode}
               </pre>
               <button 
-                onClick={() => { navigator.clipboard.writeText(scriptCode); alert('Código copiado!'); }}
-                className="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg"
+                onClick={() => { navigator.clipboard.writeText(scriptCode); alert('Script copiado com sucesso!'); }}
+                className="absolute top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg active:scale-95 transition-transform"
               >
-                Copiar Código
+                Copiar Script 📋
               </button>
             </div>
           </div>
 
           <div className="space-y-6">
             <h3 className="text-lg font-black text-gray-800 flex items-center gap-2 uppercase tracking-tighter">
-              <span className="text-green-500">2.</span> URL da Implantação
+              <span className="text-green-500">2.</span> Publicar "App da Web"
             </h3>
-            <p className="text-[11px] text-gray-500">
-              Cole abaixo a URL que você recebeu após a implantação do script. O app usará este link para puxar as informações da planilha.
-            </p>
-            <div className="space-y-4">
+            <div className="bg-emerald-50 p-6 rounded-[2rem] border border-emerald-100 space-y-3">
+              <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">⚠️ Importante no Google Sheets:</p>
+              <ul className="text-[11px] text-emerald-700 space-y-2 font-medium">
+                <li>• Clique em <b>Implantar</b> &gt; <b>Nova Implantação</b></li>
+                <li>• Tipo: Escolha <b>"App da Web"</b></li>
+                <li>• Quem pode acessar: Escolha <b>"Qualquer um"</b></li>
+                <li>• Copie a URL gerada e cole abaixo:</li>
+              </ul>
               <input 
                 type="text" 
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-2xl p-4 outline-none text-sm font-mono focus:border-green-500"
+                className="w-full bg-white border-2 border-emerald-200 rounded-2xl p-4 outline-none text-sm font-mono focus:border-green-500 shadow-sm"
                 placeholder="https://script.google.com/macros/s/.../exec"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
@@ -118,11 +121,11 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
               <button 
                 onClick={validateAndTest}
                 disabled={status === 'testing'}
-                className="w-full py-5 bg-[#064E3B] text-green-400 rounded-2xl font-black text-xs tracking-widest shadow-xl hover:scale-[1.01] transition-all"
+                className="w-full py-5 bg-[#064E3B] text-green-400 rounded-2xl font-black text-xs tracking-widest shadow-xl hover:scale-[1.01] transition-all disabled:opacity-50"
               >
-                {status === 'testing' ? 'TESTANDO CONEXÃO...' : 'SALVAR E SINCRONIZAR AGORA 🔄'}
+                {status === 'testing' ? 'CONECTANDO...' : 'SALVAR URL E SINCRONIZAR 🔄'}
               </button>
-              {status === 'success' && <p className="text-center text-[10px] font-black text-green-600 uppercase">✅ Conectado com sucesso!</p>}
+              {status === 'success' && <p className="text-center text-[10px] font-black text-green-600 uppercase animate-bounce">✅ Planilha conectada com sucesso!</p>}
               {status === 'error' && <p className="text-center text-[10px] font-black text-red-500 uppercase">❌ {errorMessage}</p>}
             </div>
           </div>
