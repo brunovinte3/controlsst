@@ -48,16 +48,18 @@ export const StorageService = {
     try {
       const { data, error } = await supabase.from('employees').select('*').order('name');
       if (error) {
-        // Fallback caso falte alguma coluna, tenta pegar as básicas
-        if (error.message.includes('column') || error.message.includes('department')) {
-          const { data: retryData, error: retryError } = await supabase.from('employees').select('id, name, registration, role, setor, company, trainings, photoUrl').order('name');
-          if (retryError) throw retryError;
-          return (retryData || []).map(item => ({ ...item, trainings: item.trainings || {} }));
+        console.error("Erro Supabase (getEmployees):", error);
+        // Tenta buscar apenas as colunas que sabemos que existem se der erro de coluna
+        if (error.message.includes('column')) {
+           const { data: retryData, error: retryError } = await supabase.from('employees').select('id, name, registration').order('name');
+           if (retryError) throw retryError;
+           return (retryData || []).map(item => ({ ...item, role: '-', setor: '-', company: '-', trainings: {} } as Employee));
         }
         throw error;
       }
       return (data || []).map(item => ({ ...item, trainings: item.trainings || {} }));
     } catch (e) {
+      console.error("Falha ao carregar funcionários:", e);
       return [];
     }
   },
@@ -66,9 +68,12 @@ export const StorageService = {
     if (!employees.length) return;
     try {
       const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
-      if (error) throw error;
+      if (error) {
+        console.error("Erro Supabase (upsert):", error);
+        throw error;
+      }
     } catch (err: any) {
-      throw new Error(`Erro no Banco: ${err.message}`);
+      throw new Error(`Erro no Banco: ${err.message}. Certifique-se de que a coluna 'setor' existe no Supabase.`);
     }
   },
 
@@ -83,30 +88,18 @@ export const StorageService = {
     try {
       const response = await fetch(url, { 
         method: 'GET',
-        redirect: 'follow',
-        mode: 'cors'
+        redirect: 'follow'
       });
 
-      if (!response.ok) {
-        throw new Error(`Google retornou erro: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`Google retornou erro: ${response.status}`);
 
       const text = await response.text();
-      
       if (text.trim().startsWith('<!DOCTYPE')) {
-        throw new Error("Erro de Permissão: O script exige Login. Publique como 'Qualquer um'.");
+        throw new Error("Erro de Permissão: Publique o script como 'Qualquer um'.");
       }
 
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error("O Google não enviou um JSON válido.");
-      }
-      
-      if (data && data.error) {
-        throw new Error(`Erro no Script Google: ${data.error}`);
-      }
+      const data = JSON.parse(text);
+      if (data && data.error) throw new Error(`Erro no Script Google: ${data.error}`);
 
       if (Array.isArray(data)) {
         const formatted = formatEmployeeData(data);
@@ -154,7 +147,7 @@ export const StorageService = {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `backup_sst_${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `backup_sst.json`;
     a.click();
   }
 };

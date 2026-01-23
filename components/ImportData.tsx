@@ -59,7 +59,7 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
       setError('');
     } catch (err) {
       console.error(err);
-      setError('Erro crítico ao processar texto. Verifique se o formato da tabela está correto.');
+      setError('Erro crítico ao processar texto.');
     }
   };
 
@@ -74,7 +74,7 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
       setInputText('');
       setTimeout(() => setSyncSuccess(false), 5000);
     } catch (err: any) {
-      setError(`Erro ao sincronizar: ${err.message || 'Verifique sua conexão e as tabelas no Supabase.'}`);
+      setError(`Erro ao sincronizar: ${err.message}`);
     } finally {
       setIsProcessing(false);
     }
@@ -95,73 +95,32 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
             <h2 className="text-3xl font-black text-gray-800 flex items-center gap-3 tracking-tighter">
               <span className="text-4xl">📥</span> Importar <span className="text-emerald-600 italic">Planilha</span>
             </h2>
-            <p className="text-gray-400 mt-1 font-bold uppercase text-[10px] tracking-widest italic">Integração Direta com Supabase Cloud</p>
+            <p className="text-gray-400 mt-1 font-bold uppercase text-[10px] tracking-widest italic">Integração Cloud</p>
           </div>
           
           <div className="flex gap-3">
-             <button 
-                onClick={handleClear}
-                className="px-6 py-3 bg-red-50 text-red-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all"
-             >
-                Limpar 🗑️
-             </button>
-             <button 
-                onClick={handleProcess}
-                className="px-6 py-3 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all"
-             >
-                Atualizar Prévia 🔄
-             </button>
+             <button onClick={handleClear} className="px-6 py-3 bg-red-50 text-red-500 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all">Limpar 🗑️</button>
+             <button onClick={handleProcess} className="px-6 py-3 bg-blue-50 text-blue-600 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">Atualizar Prévia 🔄</button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          {[
-            { label: 'Identificação', val: 'Matrícula (Chave Única)', icon: '🆔' },
-            { label: 'Cursos', val: 'NRs em colunas', icon: '📜' },
-            { label: 'Sincronia', val: 'Atualiza Existentes', icon: '♻️' },
-            { label: 'Status', val: 'Automático', icon: '⚡' },
-          ].map((item, i) => (
-            <div key={i} className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm">{item.icon}</span>
-                <p className="font-black text-[9px] text-emerald-800 uppercase tracking-widest">{item.label}</p>
-              </div>
-              <p className="text-[10px] text-emerald-600 font-bold">{item.val}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="relative group">
-          <textarea
-            className="w-full h-[350px] p-8 bg-gray-50 border-2 border-gray-100 rounded-[2rem] font-mono text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all resize-none shadow-inner"
-            placeholder="Selecione os dados no Excel (Ctrl+C) e cole aqui (Ctrl+V)..."
-            value={inputText}
-            onChange={(e) => {
-              setInputText(e.target.value);
-              if (error) setError('');
-            }}
-          />
-          {inputText === '' && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-10">
-              <p className="text-4xl mb-2">📋</p>
-              <p className="text-xs font-black uppercase tracking-widest">Área de Colagem</p>
-            </div>
-          )}
-        </div>
+        <textarea
+          className="w-full h-[350px] p-8 bg-gray-50 border-2 border-gray-100 rounded-[2rem] font-mono text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all resize-none shadow-inner"
+          placeholder="Selecione os dados no Excel (Ctrl+C) e cole aqui (Ctrl+V)..."
+          value={inputText}
+          onChange={(e) => setInputText(e.target.value)}
+        />
 
         {error && (
-          <div className="mt-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl text-[10px] font-black uppercase flex items-center gap-3 animate-bounce">
+          <div className="mt-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-xl text-[10px] font-black uppercase animate-bounce">
             ⚠️ {error}
           </div>
         )}
 
         {syncSuccess && (
-          <div className="mt-6 p-6 bg-emerald-600 text-white rounded-[1.5rem] shadow-xl shadow-emerald-900/20 flex items-center justify-center gap-4 animate-fadeIn">
+          <div className="mt-6 p-6 bg-emerald-600 text-white rounded-[1.5rem] flex items-center justify-center gap-4 animate-fadeIn">
             <span className="text-2xl">✅</span>
-            <div className="text-center">
-              <p className="font-black uppercase text-xs tracking-widest">Sincronização Concluída!</p>
-              <p className="text-[10px] opacity-80 font-bold uppercase">Todos os dados estão salvos no Supabase.</p>
-            </div>
+            <p className="font-black uppercase text-xs tracking-widest">Sincronização Concluída!</p>
           </div>
         )}
 
@@ -169,38 +128,24 @@ const ImportData: React.FC<ImportDataProps> = ({ onImport }) => {
           <div className="mt-8 p-8 bg-emerald-50 rounded-[2rem] border border-emerald-100 animate-fadeIn">
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h4 className="font-black text-emerald-900 uppercase tracking-tighter">Resumo do Processamento</h4>
-                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">{parsedEmployees.length} registros prontos para persistência</p>
+                <h4 className="font-black text-emerald-900 uppercase tracking-tighter">Resumo</h4>
+                <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">{parsedEmployees.length} registros</p>
               </div>
-              <div className="flex items-center gap-4">
-                <span className="text-[10px] font-black text-emerald-800/40 uppercase">Enviar ao Banco Cloud?</span>
-                <button 
-                  onClick={handleSync}
-                  disabled={isProcessing}
-                  className="px-10 py-5 bg-[#064E3B] text-emerald-400 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 transition-all disabled:opacity-50 flex items-center gap-3"
-                >
-                  {isProcessing ? 'Sincronizando...' : 'SINCRONIZAR COM SUPABASE ☁️'}
-                  {!isProcessing && <span className="text-xl">🚀</span>}
-                </button>
-              </div>
+              <button onClick={handleSync} disabled={isProcessing} className="px-10 py-5 bg-[#064E3B] text-emerald-400 rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl transition-all disabled:opacity-50">
+                {isProcessing ? 'Sincronizando...' : 'ENVIAR AO BANCO ☁️'}
+              </button>
             </div>
             
             <div className="max-h-40 overflow-y-auto custom-scrollbar pr-4 space-y-2">
               {parsedEmployees.map((emp, i) => (
                 <div key={i} className="flex justify-between items-center text-[10px] bg-white/50 p-2 rounded-lg border border-emerald-100/50">
                   <span className="font-black text-emerald-900 uppercase">{emp.name}</span>
-                  <span className="font-bold text-emerald-600/60">RE: {emp.registration} • {emp.department}</span>
+                  <span className="font-bold text-emerald-600/60 uppercase">RE: {emp.registration} • Setor: {emp.setor}</span>
                 </div>
               ))}
             </div>
           </div>
         )}
-
-        <div className="mt-8 flex items-center justify-between opacity-40">
-           <p className="text-[9px] font-black uppercase tracking-widest text-gray-400 italic">
-             O sistema usa o campo "Matrícula" como chave única. Importar o mesmo RE atualizará o registro existente.
-           </p>
-        </div>
       </div>
     </div>
   );
