@@ -51,40 +51,29 @@ const ConfigView: React.FC<{ onUpdate: () => void }> = ({ onUpdate }) => {
     }
   };
 
-  const sqlFix = `-- COMANDO PARA REPARAR O BANCO DE DADOS (SUPABASE)
--- Copie tudo e cole no SQL Editor do Supabase
+  const sqlFix = `-- 1. COMANDO DE REPARO COMPLETO (Copie e rode no SQL Editor)
+-- Esse comando garante que todas as colunas existem e recarrega o schema
 
+CREATE TABLE IF NOT EXISTS employees (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  registration TEXT NOT NULL,
+  role TEXT DEFAULT '-',
+  setor TEXT DEFAULT 'Geral',
+  company TEXT DEFAULT 'Empresa Padrão',
+  "photoUrl" TEXT,
+  trainings JSONB DEFAULT '{}'::jsonb
+);
+
+-- Adiciona setor se não existir (caso a tabela já existisse antes)
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS setor TEXT DEFAULT 'Geral';
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'Não Definido';
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS role TEXT DEFAULT '-';
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS company TEXT DEFAULT 'Empresa Padrão';
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS "photoUrl" TEXT;
-ALTER TABLE employees ADD COLUMN IF NOT EXISTS trainings JSONB DEFAULT '{}'::jsonb;`;
+ALTER TABLE employees ADD COLUMN IF NOT EXISTS trainings JSONB DEFAULT '{}'::jsonb;
 
-  const googleScriptCode = `function doGet(e) {
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var sheet = ss.getSheets()[0];
-    var data = sheet.getDataRange().getValues();
-    var headers = data[0];
-    var jsonArray = [];
-    for (var i = 1; i < data.length; i++) {
-      var obj = {};
-      for (var j = 0; j < headers.length; j++) {
-        var header = headers[j].toString().trim();
-        var value = data[i][j];
-        if (value instanceof Date) {
-          obj[header] = Utilities.formatDate(value, Session.getScriptTimeZone(), "yyyy-MM-dd");
-        } else { obj[header] = value; }
-      }
-      jsonArray.push(obj);
-    }
-    return ContentService.createTextOutput(JSON.stringify(jsonArray))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({"error": error.toString()}))
-      .setMimeType(ContentService.MimeType.JSON);
-  }
-}`;
+-- 2. COMANDO PARA LIMPAR CACHE (IMPORTANTE!)
+NOTIFY pgrst, 'reload schema';`;
 
   return (
     <div className="max-w-6xl mx-auto animate-fadeIn space-y-12 pb-20">
@@ -96,16 +85,20 @@ ALTER TABLE employees ADD COLUMN IF NOT EXISTS trainings JSONB DEFAULT '{}'::jso
         </header>
 
         <div className="max-w-4xl mx-auto space-y-8">
-          {/* Seção de Reparo do Supabase */}
-          {(errorMessage.toLowerCase().includes('column') || errorMessage.toLowerCase().includes('department')) && (
+          {/* Alerta de Erro de Schema */}
+          {status === 'error' && (errorMessage.includes('column') || errorMessage.includes('cache') || errorMessage.includes('schema')) && (
             <div className="bg-amber-900 text-white p-8 rounded-[2.5rem] space-y-4 border-l-8 border-amber-500 animate-fadeIn">
                <h4 className="text-amber-400 font-black text-xs uppercase tracking-widest flex items-center gap-2">
-                 <span>🚨</span> Erro de Colunas: Resolva agora no Supabase
+                 <span>🚨</span> Problema de Sincronização de Schema
                </h4>
-               <p className="text-[11px] text-amber-100/80 font-medium">
-                 O seu banco de dados Supabase está sem a coluna <b>setor</b>. 
-                 Copie o código abaixo, vá no <b>SQL Editor</b> do seu Supabase e clique em <b>Run</b>:
-               </p>
+               <div className="text-[11px] text-amber-100/80 font-medium space-y-2">
+                 <p>O Supabase ainda não reconheceu as novas colunas. Siga estes passos:</p>
+                 <ol className="list-decimal ml-4 space-y-1">
+                   <li>Vá no <b>SQL Editor</b> do Supabase.</li>
+                   <li>Cole o código abaixo e clique em <b>RUN</b>.</li>
+                   <li><b>RECARREGUE ESTA PÁGINA (F5)</b> após o comando terminar.</li>
+                 </ol>
+               </div>
                <div className="relative group">
                  <pre className="bg-black/40 p-6 rounded-2xl text-[10px] font-mono overflow-x-auto text-amber-200 border border-amber-500/20 max-h-48 overflow-y-auto custom-scrollbar">
                    {sqlFix}
@@ -114,7 +107,7 @@ ALTER TABLE employees ADD COLUMN IF NOT EXISTS trainings JSONB DEFAULT '{}'::jso
                   onClick={() => navigator.clipboard.writeText(sqlFix)}
                   className="absolute top-4 right-4 bg-amber-500 text-white text-[9px] px-3 py-1 rounded-lg font-black hover:bg-amber-400"
                  >
-                   COPIAR SQL
+                   COPIAR SQL DE REPARO
                  </button>
                </div>
             </div>
@@ -157,47 +150,6 @@ ALTER TABLE employees ADD COLUMN IF NOT EXISTS trainings JSONB DEFAULT '{}'::jso
             </div>
           </div>
         </div>
-      </div>
-
-      <div className="bg-white p-10 rounded-[3rem] shadow-sm border border-gray-100">
-        <header className="mb-10 flex items-center gap-4">
-          <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-xl">👤</div>
-          <div>
-            <h2 className="text-2xl font-black text-gray-800 tracking-tight">Login Administrativo</h2>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Alterar credenciais de segurança</p>
-          </div>
-        </header>
-
-        <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="space-y-2">
-            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Usuário</label>
-            <input 
-              type="text" 
-              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
-              value={adminProfile.username}
-              onChange={e => setAdminProfile({...adminProfile, username: e.target.value})}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest ml-1">Senha</label>
-            <input 
-              type="text" 
-              className="w-full bg-gray-50 border-2 border-transparent rounded-2xl p-4 font-bold text-sm focus:border-blue-500 outline-none"
-              value={adminProfile.password}
-              onChange={e => setAdminProfile({...adminProfile, password: e.target.value})}
-            />
-          </div>
-          <div className="flex items-end">
-            <button 
-              type="submit"
-              className={`w-full py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                isProfileSaved ? 'bg-green-600 text-white' : 'bg-blue-600 text-white shadow-xl hover:scale-[1.02]'
-              }`}
-            >
-              {isProfileSaved ? 'SALVO ✅' : 'ATUALIZAR ACESSO'}
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

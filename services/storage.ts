@@ -36,30 +36,32 @@ export const StorageService = {
     await supabase.from('app_settings').upsert({ key, value });
   },
 
-  async updateCompanyProfile(company: CompanyProfile) {
-    return this.updateAppSetting('company_profile', company);
-  },
-
-  async updateAdminProfile(admin: AdminProfile) {
-    return this.updateAppSetting('admin_profile', admin);
-  },
-
   async getEmployees(): Promise<Employee[]> {
     try {
+      // Tentativa de busca completa
       const { data, error } = await supabase.from('employees').select('*').order('name');
+      
       if (error) {
-        console.error("Erro Supabase (getEmployees):", error);
-        // Tenta buscar apenas as colunas que sabemos que existem se der erro de coluna
-        if (error.message.includes('column')) {
-           const { data: retryData, error: retryError } = await supabase.from('employees').select('id, name, registration').order('name');
-           if (retryError) throw retryError;
-           return (retryData || []).map(item => ({ ...item, role: '-', setor: '-', company: '-', trainings: {} } as Employee));
+        console.error("Erro detalhado do Supabase:", error);
+        
+        // Se o erro for de cache ou coluna ausente, tenta uma busca mínima para não quebrar o app
+        if (error.message.includes('column') || error.message.includes('cache')) {
+          const { data: minimalData, error: minimalError } = await supabase.from('employees').select('id, name, registration').limit(100);
+          if (minimalError) throw minimalError;
+          
+          return (minimalData || []).map(item => ({
+            ...item,
+            role: '-',
+            setor: '-',
+            company: '-',
+            trainings: {}
+          } as Employee));
         }
         throw error;
       }
       return (data || []).map(item => ({ ...item, trainings: item.trainings || {} }));
-    } catch (e) {
-      console.error("Falha ao carregar funcionários:", e);
+    } catch (e: any) {
+      console.error("Falha crítica ao carregar funcionários:", e);
       return [];
     }
   },
@@ -68,12 +70,11 @@ export const StorageService = {
     if (!employees.length) return;
     try {
       const { error } = await supabase.from('employees').upsert(employees, { onConflict: 'id' });
-      if (error) {
-        console.error("Erro Supabase (upsert):", error);
-        throw error;
-      }
+      if (error) throw error;
     } catch (err: any) {
-      throw new Error(`Erro no Banco: ${err.message}. Certifique-se de que a coluna 'setor' existe no Supabase.`);
+      console.error("Erro ao salvar:", err);
+      // Retorna o erro original do Supabase para o usuário ver o que realmente está faltando
+      throw new Error(`Erro Supabase: ${err.message}`);
     }
   },
 
@@ -86,20 +87,10 @@ export const StorageService = {
     if (!url) return false;
 
     try {
-      const response = await fetch(url, { 
-        method: 'GET',
-        redirect: 'follow'
-      });
-
+      const response = await fetch(url, { method: 'GET', redirect: 'follow' });
       if (!response.ok) throw new Error(`Google retornou erro: ${response.status}`);
-
       const text = await response.text();
-      if (text.trim().startsWith('<!DOCTYPE')) {
-        throw new Error("Erro de Permissão: Publique o script como 'Qualquer um'.");
-      }
-
       const data = JSON.parse(text);
-      if (data && data.error) throw new Error(`Erro no Script Google: ${data.error}`);
 
       if (Array.isArray(data)) {
         const formatted = formatEmployeeData(data);
@@ -110,7 +101,6 @@ export const StorageService = {
       }
       return false;
     } catch (e: any) {
-      console.error("Erro na Sincronização:", e);
       throw e;
     }
   },
@@ -140,6 +130,10 @@ export const StorageService = {
 
   getAdminProfile(): AdminProfile { return DEFAULT_ADMIN; },
   getCompanyProfile(): CompanyProfile { return DEFAULT_COMPANY; },
+
+  async updateAdminProfile(admin: AdminProfile) {
+    await this.updateAppSetting('admin_profile', admin);
+  },
 
   async downloadBackup() {
     const data = await this.getEmployees();
