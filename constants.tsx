@@ -80,6 +80,27 @@ export const NR_COURSES: NRCourse[] = [
     description: 'Segurança e Saúde no Trabalho na Agricultura, Pecuária, Silvicultura, Exploração Florestal e Aquicultura.' 
   },
   { 
+    id: 'NR315', 
+    name: 'NR31.5 Comissão Interna de Prevenção de Acidentes do Trabalho Rural - CIPATR', 
+    validityYears: 2, 
+    workload: '20h', 
+    description: 'Focado na prevenção de acidentes e doenças no trabalho rural.' 
+  },
+  { 
+    id: 'NR317', 
+    name: 'NR31.7 Agrotóxicos, Aditivos, Adjuvantes e Produtos Afins', 
+    validityYears: 2, 
+    workload: '16h', 
+    description: 'Segurança e saúde no manuseio de agrotóxicos no trabalho rural.' 
+  },
+  { 
+    id: 'NR3112', 
+    name: 'NR31.12 Segurança no Trabalho em Máquinas, Equipamentos e Implementos', 
+    validityYears: 2, 
+    workload: '24h', 
+    description: 'Segurança na operação de máquinas e implementos agrícolas conforme NR-31.' 
+  },
+  { 
     id: 'NR32', 
     name: 'NR 32 - Serviços de Saúde', 
     validityYears: 2, 

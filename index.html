@@ -6,6 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ControlSST - Gestão Normativa</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            animation: {
+              'bounce-short': 'bounce 1s ease-in-out 1',
+            }
+          }
+        }
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -13,6 +25,12 @@
           background-color: #F0FDF4; /* Verde esmeralda bem clarinho */
           min-height: 100vh;
           -webkit-tap-highlight-color: transparent;
+          transition: background-color 0.3s ease;
+        }
+
+        .dark body {
+          background-color: #022c22; /* emerald-950 */
+          color: #ecfdf5; /* emerald-50 */
         }
         
         @media print {
@@ -31,7 +49,7 @@
         }
 
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f0fdf4; }
+        ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #10b981; border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: #059669; }
 
@@ -39,9 +57,20 @@
           background-color: rgba(16, 185, 129, 0.05);
         }
 
-        /* Melhoria de touch no mobile */
+        .dark .sst-table-row:nth-child(even) {
+          background-color: rgba(16, 185, 129, 0.1);
+        }
+
         input, select, button {
           touch-action: manipulation;
+        }
+
+        /* Estilos Recharts para Dark Mode */
+        .dark .recharts-cartesian-grid-line {
+          stroke: #10b98120;
+        }
+        .dark .recharts-text {
+          fill: #10b98160 !important;
         }
     </style>
 <script type="importmap">
@@ -58,7 +87,7 @@
 }
 </script>
 </head>
-<body class="text-gray-900">
+<body class="text-gray-900 transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 </body>
