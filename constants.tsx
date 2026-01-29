@@ -96,7 +96,7 @@ export const NR_COURSES: NRCourse[] = [
   { 
     id: 'NR3112', 
     name: 'NR31.12 Segurança no Trabalho em Máquinas, Equipamentos e Implementos', 
-    validityYears: 2, 
+    validityYears: 1, 
     workload: '24h', 
     description: 'Segurança na operação de máquinas e implementos agrícolas conforme NR-31.' 
   },
