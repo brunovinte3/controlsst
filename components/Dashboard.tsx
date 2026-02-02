@@ -338,8 +338,8 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
 
       {/* MODAL DETALHES - CUSTOMIZADO PARA CIPA/BRIGADA/NR INTERATIVA */}
       {detailModal && (
-        <div className="fixed inset-0 bg-emerald-950/80 backdrop-blur-xl z-[1500] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-emerald-950 w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] border border-emerald-100 dark:border-emerald-800 print:max-h-none print:shadow-none print:border-none print:fixed print:inset-0 print:bg-white print:z-[2000]">
+        <div className="fixed inset-0 bg-emerald-950/80 backdrop-blur-xl z-[1500] flex items-center justify-center p-4 print:relative print:p-0 print:bg-white print:block">
+          <div className="bg-white dark:bg-emerald-950 w-full max-w-5xl rounded-[3rem] shadow-2xl flex flex-col max-h-[90vh] border border-emerald-100 dark:border-emerald-800 print:max-h-none print:shadow-none print:border-none print:static print:w-full">
              <header className="p-8 border-b dark:border-emerald-800 flex justify-between items-center bg-white dark:bg-emerald-950 sticky top-0 z-10 rounded-t-[3rem] no-print">
                 <div>
                   <h3 className="text-2xl font-black text-emerald-900 dark:text-emerald-400 italic">{detailModal.label}</h3>

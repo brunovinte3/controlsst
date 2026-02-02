@@ -47,13 +47,23 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
   }, [employees, filters]);
 
   return (
-    <div className="space-y-6 pb-20 animate-fadeIn">
+    <div className="space-y-6 pb-20 animate-fadeIn print:pb-0 print:space-y-0">
       <div className="flex justify-between items-center no-print">
         <div>
           <h2 className="text-3xl font-black text-gray-800 tracking-tighter italic">Auditoria <span className="text-emerald-600">Normativa</span></h2>
           <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 italic">Relatórios Gerenciais ControlSST</p>
         </div>
         <button onClick={() => window.print()} className="bg-[#064E3B] text-emerald-400 px-8 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl">🖨️ Exportar PDF</button>
+      </div>
+
+      <div className="hidden print:block mb-8 p-10 bg-emerald-50 border-b-4 border-emerald-900">
+          <h1 className="text-3xl font-black uppercase text-emerald-950 tracking-tighter">Relatório de Auditoria SST</h1>
+          <div className="mt-4 grid grid-cols-2 gap-4 text-[10px] font-black uppercase tracking-widest text-emerald-700">
+             <p>Empresa: {filters.company || 'Todas'}</p>
+             <p className="text-right">Setor: {filters.setor || 'Todos'}</p>
+             <p>Status: {filters.status || 'Todos'}</p>
+             <p className="text-right">Gerado em: {new Date().toLocaleString()}</p>
+          </div>
       </div>
 
       <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-emerald-50 no-print space-y-4">
@@ -95,9 +105,9 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
         </div>
       </div>
 
-      <div className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-emerald-100">
-        <table className="w-full text-left">
-          <thead className="bg-emerald-900 text-emerald-400 font-black uppercase text-[9px] tracking-[0.2em]">
+      <div className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-emerald-100 print:shadow-none print:border-none print:overflow-visible">
+        <table className="w-full text-left print:text-black">
+          <thead className="bg-emerald-900 text-emerald-400 font-black uppercase text-[9px] tracking-[0.2em] print:bg-emerald-100 print:text-black print:border-b-2 print:border-emerald-900">
             <tr>
               <th className="px-8 py-6">Empresa</th>
               <th className="px-8 py-6">Colaborador</th>
@@ -106,23 +116,23 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
               <th className="px-8 py-6">Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-emerald-50">
+          <tbody className="divide-y divide-emerald-50 print:divide-gray-200">
             {reportData.map((item, idx) => (
-              <tr key={idx} className="sst-table-row">
+              <tr key={idx} className="sst-table-row print:break-inside-avoid">
                 <td className="px-8 py-5 text-[9px] font-black">{item.employee.company}</td>
                 <td className="px-8 py-5">
-                  <p className="font-black text-emerald-950 text-sm">{item.employee.name}</p>
+                  <p className="font-black text-emerald-950 text-sm print:text-black">{item.employee.name}</p>
                   <p className="text-[9px] text-emerald-600/60 font-black">RE: {item.employee.registration}</p>
                 </td>
                 <td className="px-8 py-5">
-                  <p className="font-black text-emerald-700 text-sm italic">{item.courseId}</p>
+                  <p className="font-black text-emerald-700 text-sm italic print:text-black">{item.courseId}</p>
                   <p className="text-[9px] text-gray-400 font-bold uppercase">{item.employee.setor}</p>
                 </td>
                 <td className="px-8 py-5 text-xs font-black">
                   {item.record.expiryDate ? new Date(item.record.expiryDate).toLocaleDateString('pt-BR') : '---'}
                 </td>
                 <td className="px-8 py-5">
-                  <span className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest ${STATUS_CONFIG[item.record.status].bg} ${STATUS_CONFIG[item.record.status].text}`}>
+                  <span className={`px-4 py-2 rounded-xl text-[8px] font-black uppercase tracking-widest ${STATUS_CONFIG[item.record.status].bg} ${STATUS_CONFIG[item.record.status].text} print:border print:border-gray-300`}>
                     {STATUS_CONFIG[item.record.status].label}
                   </span>
                 </td>
@@ -130,6 +140,10 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="hidden print:block mt-12 pt-8 border-t-2 border-emerald-900 text-center">
+         <p className="text-[9px] font-black text-gray-400 uppercase tracking-[0.5em]">Fim do Relatório • ControlSST Gestão Normativa</p>
       </div>
     </div>
   );
