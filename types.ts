@@ -1,5 +1,6 @@
 
 export type TrainingStatus = 'VALID' | 'EXPIRING' | 'EXPIRED' | 'NOT_TRAINED';
+export type EmployeeSituation = 'ATIVO' | 'AFASTADO' | 'DEMITIDO';
 
 export interface NRCourse {
   id: string;
@@ -21,9 +22,10 @@ export interface Employee {
   name: string;
   registration: string;
   role: string;
-  setor: string; // Alterado de department para setor
+  setor: string;
   company: string;
   photoUrl?: string;
+  situation: EmployeeSituation;
   trainings: Record<string, TrainingRecord>;
 }
 

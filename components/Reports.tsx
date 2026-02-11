@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
-import { Employee, TrainingStatus, TrainingRecord } from '../types';
-import { NR_COURSES, STATUS_CONFIG } from '../constants';
+import { Employee, TrainingStatus, TrainingRecord, EmployeeSituation } from '../types';
+import { NR_COURSES, STATUS_CONFIG, SITUATION_CONFIG } from '../constants';
 import { getDaysRemaining } from '../utils/calculations';
 
 interface ReportsProps {
@@ -13,6 +13,7 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
     company: '',
     setor: '',
     status: '' as TrainingStatus | '',
+    situation: '' as EmployeeSituation | '',
     course: '',
     search: '',
     period: 'all' as 'all' | '15' | '30' | '60' | '90' | 'expired',
@@ -33,12 +34,13 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
         const matchesCompany = !filters.company || emp.company === filters.company;
         const matchesSetor = !filters.setor || emp.setor === filters.setor;
         const matchesStatus = !filters.status || t.status === filters.status;
+        const matchesSituation = !filters.situation || emp.situation === filters.situation;
         const matchesCourse = !filters.course || cid === filters.course;
 
         let matchesPeriod = true;
         if (filters.period === 'expired') matchesPeriod = t.status === 'EXPIRED';
 
-        if (matchesSearch && matchesCompany && matchesSetor && matchesStatus && matchesCourse && matchesPeriod) {
+        if (matchesSearch && matchesCompany && matchesSetor && matchesStatus && matchesSituation && matchesCourse && matchesPeriod) {
           result.push({ employee: emp, courseId: cid, record: t, days });
         }
       });
@@ -67,7 +69,7 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
       </div>
 
       <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-emerald-50 no-print space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div>
             <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Empresa</label>
             <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" value={filters.company} onChange={e => setFilters({...filters, company: e.target.value})}>
@@ -99,6 +101,15 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
             </select>
           </div>
           <div>
+            <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Situação</label>
+            <select className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" value={filters.situation} onChange={e => setFilters({...filters, situation: e.target.value as any})}>
+              <option value="">Todas</option>
+              <option value="ATIVO">Ativo</option>
+              <option value="AFASTADO">Afastado</option>
+              <option value="DEMITIDO">Demitido</option>
+            </select>
+          </div>
+          <div>
             <label className="block text-[9px] font-black text-emerald-800/40 uppercase mb-2">Pesquisa</label>
             <input type="text" className="w-full bg-emerald-50/30 border border-emerald-50 rounded-xl p-3 text-xs font-bold" placeholder="Nome ou RE..." value={filters.search} onChange={e => setFilters({...filters, search: e.target.value})} />
           </div>
@@ -111,6 +122,7 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
             <tr>
               <th className="px-8 py-6">Empresa</th>
               <th className="px-8 py-6">Colaborador</th>
+              <th className="px-8 py-6">Situação</th>
               <th className="px-8 py-6">Curso / Setor</th>
               <th className="px-8 py-6">Vencimento</th>
               <th className="px-8 py-6">Status</th>
@@ -123,6 +135,11 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
                 <td className="px-8 py-5">
                   <p className="font-black text-emerald-950 text-sm print:text-black">{item.employee.name}</p>
                   <p className="text-[9px] text-emerald-600/60 font-black">RE: {item.employee.registration}</p>
+                </td>
+                <td className="px-8 py-5">
+                   <span className={`px-2 py-1 rounded text-[7px] font-black uppercase ${SITUATION_CONFIG[item.employee.situation].bg} ${SITUATION_CONFIG[item.employee.situation].text} border border-current`}>
+                    {SITUATION_CONFIG[item.employee.situation].label}
+                  </span>
                 </td>
                 <td className="px-8 py-5">
                   <p className="font-black text-emerald-700 text-sm italic print:text-black">{item.courseId}</p>

@@ -1,5 +1,5 @@
 
-import { TrainingStatus, TrainingRecord, Employee } from '../types';
+import { TrainingStatus, TrainingRecord, Employee, EmployeeSituation } from '../types';
 import { NR_COURSES } from '../constants';
 
 const parseFlexibleDate = (dateStr: any): Date | null => {
@@ -85,15 +85,23 @@ export const formatEmployeeData = (rawData: any[]): Employee[] => {
 
     const registration = String(normalizedRow['MATRICULA'] || normalizedRow['REGISTRO'] || normalizedRow['RE'] || `ID-${idx}`).trim();
     const id = row.id || registration; 
+
+    // Mapeamento da Situação
+    let situation: EmployeeSituation = 'ATIVO';
+    const sitValue = String(normalizedRow['SITUACAO'] || normalizedRow['STATUS'] || '').toUpperCase().trim();
+    if (sitValue === 'DEMITIDO' || sitValue === 'DEMITIDA' || sitValue === 'DESLIGADO' || sitValue === 'DESLIGADA') situation = 'DEMITIDO';
+    else if (sitValue === 'AFASTADO' || sitValue === 'AFASTADA' || sitValue === 'LICENCA') situation = 'AFASTADO';
+    // Se vazio ou qualquer outro valor não reconhecido, assume ATIVO conforme regra 2
     
     return {
       id: id,
       name: normalizedRow['NOMECOMPLETO'] || normalizedRow['NOME'] || 'Sem Nome',
       registration: registration,
       role: normalizedRow['FUNCAO'] || normalizedRow['CARGO'] || '-',
-      setor: normalizedRow['SETOR'] || normalizedRow['DEPARTAMENTO'] || '-', // Mapeia para setor
+      setor: normalizedRow['SETOR'] || normalizedRow['DEPARTAMENTO'] || '-',
       company: normalizedRow['EMPRESA'] || normalizedRow['UNIDADE'] || 'Empresa Padrão',
       photoUrl: normalizedRow['FOTO'] || normalizedRow['URLFOTO'] || undefined,
+      situation: situation,
       trainings,
     };
   });

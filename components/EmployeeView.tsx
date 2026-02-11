@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
-import { Employee } from '../types';
-import { STATUS_CONFIG, NR_COURSES } from '../constants';
+import { Employee, EmployeeSituation } from '../types';
+import { STATUS_CONFIG, NR_COURSES, SITUATION_CONFIG } from '../constants';
 import { calculateTrainingStatus, getExpiryDate, getDaysRemaining, formatEmployeeData } from '../utils/calculations';
 import { StorageService } from '../services/storage';
 
@@ -15,6 +15,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSetor, setSelectedSetor] = useState('TODOS');
   const [selectedCompany, setSelectedCompany] = useState('TODAS');
+  const [selectedSituation, setSelectedSituation] = useState<'TODAS' | EmployeeSituation>('TODAS');
   const [editingEmp, setEditingEmp] = useState<Employee | null>(null);
   const [showBulkImport, setShowBulkImport] = useState(false);
   
@@ -58,12 +59,13 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
 
         const matchesCompany = selectedCompany === 'TODAS' || empComp === selectedCompany;
         const matchesSetor = selectedSetor === 'TODOS' || empSet === selectedSetor;
+        const matchesSituation = selectedSituation === 'TODAS' || emp.situation === selectedSituation;
         const matchesSearch = !term || empName.includes(term) || empReg.includes(term);
 
-        return matchesCompany && matchesSetor && matchesSearch;
+        return matchesCompany && matchesSetor && matchesSearch && matchesSituation;
       })
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [employees, searchTerm, selectedSetor, selectedCompany]);
+  }, [employees, searchTerm, selectedSetor, selectedCompany, selectedSituation]);
 
   // Função para salvar edição
   const handleSaveEdit = async (e: React.FormEvent) => {
@@ -159,7 +161,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
             📥 Importar Planilha
           </button>
           <button 
-            onClick={() => setEditingEmp({ id: `NEW-${Date.now()}`, name: '', registration: '', role: '', setor: '', company: '', trainings: {} })}
+            onClick={() => setEditingEmp({ id: `NEW-${Date.now()}`, name: '', registration: '', role: '', setor: '', company: '', situation: 'ATIVO', trainings: {} })}
             className="flex-[2] md:flex-none bg-emerald-900 text-emerald-400 px-8 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
           >
             <span>➕ Novo Cadastro</span>
@@ -183,12 +185,18 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
           <select value={selectedCompany} onChange={(e) => { setSelectedCompany(e.target.value); setSelectedSetor('TODOS'); }} className="w-full bg-white border-2 border-emerald-50 px-8 py-5 rounded-[2rem] text-xs font-black text-emerald-700 focus:border-emerald-500 outline-none transition-all shadow-sm appearance-none text-center">
             {companies.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <select value={selectedSetor} onChange={(e) => setSelectedSetor(e.target.value)} className="w-full bg-white border-2 border-emerald-50 px-8 py-5 rounded-[2rem] text-xs font-black text-emerald-700 focus:border-emerald-500 outline-none transition-all shadow-sm appearance-none text-center">
             {setores.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select value={selectedSituation} onChange={(e) => setSelectedSituation(e.target.value as any)} className="w-full bg-white border-2 border-emerald-50 px-8 py-5 rounded-[2rem] text-xs font-black text-emerald-700 focus:border-emerald-500 outline-none transition-all shadow-sm appearance-none text-center">
+            <option value="TODAS">SITUAÇÃO: TODAS</option>
+            <option value="ATIVO">SITUAÇÃO: ATIVO</option>
+            <option value="AFASTADO">SITUAÇÃO: AFASTADO</option>
+            <option value="DEMITIDO">SITUAÇÃO: DEMITIDO</option>
           </select>
         </div>
       </div>
@@ -197,9 +205,14 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {filteredEmployees.map(emp => (
           <div key={emp.id} className="bg-white p-8 rounded-[3rem] border border-emerald-100 hover:border-emerald-500 hover:shadow-2xl transition-all group flex flex-col justify-between animate-fadeIn relative overflow-hidden">
-            <div className="absolute top-6 right-6 flex gap-2">
-              {isCipero(emp) && <div className="w-8 h-8 bg-emerald-500 text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg">C</div>}
-              {isBrigadista(emp) && <div className="w-8 h-8 bg-red-500 text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg">B</div>}
+            <div className="absolute top-6 right-6 flex flex-col items-end gap-2">
+              <div className="flex gap-2">
+                {isCipero(emp) && <div className="w-8 h-8 bg-emerald-500 text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg">C</div>}
+                {isBrigadista(emp) && <div className="w-8 h-8 bg-red-500 text-white rounded-lg flex items-center justify-center font-black text-sm shadow-lg">B</div>}
+              </div>
+              <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${SITUATION_CONFIG[emp.situation].bg} ${SITUATION_CONFIG[emp.situation].text} border border-current shadow-sm`}>
+                {SITUATION_CONFIG[emp.situation].label}
+              </span>
             </div>
 
             <div className="flex items-center gap-6 mb-8">
@@ -218,7 +231,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
         ))}
       </div>
 
-      {/* MODAL DE EDIÇÃO - POSICIONADO NO TOPO */}
+      {/* MODAL DE EDIÇÃO */}
       {editingEmp && (
         <div className="fixed inset-0 bg-emerald-950/95 backdrop-blur-2xl z-[1200] flex items-start justify-center p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-4xl rounded-[4rem] shadow-2xl overflow-hidden mt-10 mb-20 animate-fadeIn border border-emerald-50">
@@ -233,21 +246,34 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
             <form onSubmit={handleSaveEdit} className="p-12 space-y-12">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 {[
-                  { label: 'Nome Completo', key: 'name' },
-                  { label: 'Matrícula / RE', key: 'registration' },
-                  { label: 'Unidade / Empresa', key: 'company' },
-                  { label: 'Setor de Trabalho', key: 'setor' },
-                  { label: 'Cargo / Função', key: 'role' },
-                  { label: 'URL da Foto', key: 'photoUrl' }
+                  { label: 'Nome Completo', key: 'name', type: 'text' },
+                  { label: 'Matrícula / RE', key: 'registration', type: 'text' },
+                  { label: 'Unidade / Empresa', key: 'company', type: 'text' },
+                  { label: 'Setor de Trabalho', key: 'setor', type: 'text' },
+                  { label: 'Cargo / Função', key: 'role', type: 'text' },
+                  { label: 'Situação do Trabalhador', key: 'situation', type: 'select' },
+                  { label: 'URL da Foto', key: 'photoUrl', type: 'text' }
                 ].map(field => (
                   <div key={field.key} className="space-y-3">
                     <label className="text-[9px] font-black text-emerald-800/40 uppercase tracking-widest ml-3">{field.label}</label>
-                    <input 
-                      required={field.key !== 'photoUrl'}
-                      className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-2xl p-5 font-black text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner" 
-                      value={(editingEmp as any)[field.key] || ''} 
-                      onChange={e => setEditingEmp({...editingEmp, [field.key]: e.target.value})} 
-                    />
+                    {field.type === 'select' ? (
+                      <select
+                        className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-2xl p-5 font-black text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner"
+                        value={(editingEmp as any)[field.key] || 'ATIVO'}
+                        onChange={e => setEditingEmp({...editingEmp, [field.key]: e.target.value as any})}
+                      >
+                        <option value="ATIVO">ATIVO</option>
+                        <option value="AFASTADO">AFASTADO</option>
+                        <option value="DEMITIDO">DEMITIDO</option>
+                      </select>
+                    ) : (
+                      <input 
+                        required={field.key !== 'photoUrl'}
+                        className="w-full bg-emerald-50/30 border-2 border-emerald-50 rounded-2xl p-5 font-black text-sm outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner" 
+                        value={(editingEmp as any)[field.key] || ''} 
+                        onChange={e => setEditingEmp({...editingEmp, [field.key]: e.target.value})} 
+                      />
+                    )}
                   </div>
                 ))}
               </div>
@@ -287,7 +313,7 @@ const EmployeeView: React.FC<EmployeeViewProps> = ({ employees, onUpdate, isAdmi
               <button onClick={() => setShowBulkImport(false)} className="w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-sm">✕</button>
             </header>
             <div className="p-12 space-y-8 overflow-y-auto">
-              <textarea className="w-full h-80 p-8 bg-emerald-50/30 border-2 border-emerald-100 rounded-[2.5rem] font-mono text-xs outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner" placeholder="Cole os dados do Excel aqui..." value={importText} onChange={(e) => setImportText(e.target.value)} />
+              <textarea className="w-full h-80 p-8 bg-emerald-50/30 border-2 border-emerald-100 rounded-[2.5rem] font-mono text-xs outline-none focus:bg-white focus:border-emerald-500 transition-all shadow-inner" placeholder="Cole os dados do Excel aqui... (Não esqueça da coluna SITUAÇÃO para status específicos)" value={importText} onChange={(e) => setImportText(e.target.value)} />
               <div className="flex justify-between items-center bg-emerald-50/40 p-6 rounded-3xl">
                 <p className="text-[10px] font-black text-emerald-950 uppercase">{importPreview.length} Carregados</p>
                 <div className="flex gap-4">

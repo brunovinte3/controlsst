@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { Employee } from '../types';
-import { STATUS_CONFIG, NR_COURSES } from '../constants';
+import { STATUS_CONFIG, NR_COURSES, SITUATION_CONFIG } from '../constants';
 import { getDaysRemaining } from '../utils/calculations';
 import { StorageService } from '../services/storage';
 
@@ -84,6 +84,9 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
                     </div>
                   </div>
                   <div className="flex gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase ${SITUATION_CONFIG[emp.situation].bg} ${SITUATION_CONFIG[emp.situation].text} border border-current`}>
+                      {SITUATION_CONFIG[emp.situation].label}
+                    </span>
                     {isCipero(emp) && <span className="w-6 h-6 bg-emerald-500 text-white rounded flex items-center justify-center text-[10px] font-black shadow-sm">C</span>}
                     {isBrigadista(emp) && <span className="w-6 h-6 bg-red-500 text-white rounded flex items-center justify-center text-[10px] font-black shadow-sm">B</span>}
                   </div>
@@ -102,6 +105,9 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
               
               <div className="absolute top-4 right-8 text-right no-print flex items-center gap-4">
                  <div className="flex gap-2">
+                    <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border border-current ${SITUATION_CONFIG[selectedEmployee.situation].bg} ${SITUATION_CONFIG[selectedEmployee.situation].text}`}>
+                       <span className="text-[8px] font-black uppercase tracking-widest">{SITUATION_CONFIG[selectedEmployee.situation].label}</span>
+                    </div>
                     {isCipero(selectedEmployee) && (
                       <div className="flex items-center gap-2 bg-emerald-100 px-3 py-1.5 rounded-xl border border-emerald-200">
                          <span className="w-5 h-5 bg-emerald-500 text-white rounded-md flex items-center justify-center text-[10px] font-black">C</span>
@@ -137,6 +143,9 @@ const VisitorSearchView: React.FC<VisitorSearchViewProps> = ({ employees }) => {
                   <h3 className="text-2xl md:text-3xl font-black text-emerald-950 uppercase tracking-tighter flex items-center justify-center md:justify-start gap-3">
                     {selectedEmployee.name}
                     <div className="flex gap-1 print:hidden">
+                       <span className={`px-4 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-[0.1em] border-2 border-current ${SITUATION_CONFIG[selectedEmployee.situation].bg} ${SITUATION_CONFIG[selectedEmployee.situation].text}`}>
+                          {SITUATION_CONFIG[selectedEmployee.situation].label}
+                       </span>
                        {isCipero(selectedEmployee) && <span className="w-8 h-8 bg-emerald-500 text-white rounded-xl flex items-center justify-center text-sm font-black shadow-lg">C</span>}
                        {isBrigadista(selectedEmployee) && <span className="w-8 h-8 bg-red-500 text-white rounded-xl flex items-center justify-center text-sm font-black shadow-lg">B</span>}
                     </div>

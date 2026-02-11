@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { Employee, TrainingRecord, TrainingStatus } from '../types';
 import { getDaysRemaining } from '../utils/calculations';
-import { STATUS_CONFIG, NR_COURSES, DEPT_COLORS } from '../constants';
+import { STATUS_CONFIG, NR_COURSES, DEPT_COLORS, SITUATION_CONFIG } from '../constants';
 
 interface DashboardProps {
   employees: Employee[];
@@ -64,6 +64,8 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     filtered.forEach(emp => {
+      // Normalmente Dashboard foca em funcionários ATIVOS para auditoria corrente
+      // Mas para garantir visibilidade geral, processamos todos e indicamos nos detalhes
       const sectorName = (emp.setor || 'Geral').trim();
       const compName = (emp.company || 'Padrão').trim();
 
@@ -197,6 +199,7 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
           reg: emp.registration,
           role: emp.role || '-',
           setor: emp.setor || '-',
+          situation: emp.situation,
           courses: matchingCourses
         });
       }
@@ -383,7 +386,12 @@ const Dashboard: React.FC<DashboardProps> = ({ employees, isAdmin }) => {
                       {sec.list.map((item: any, i: number) => (
                         <div key={i} className="bg-emerald-50/20 dark:bg-emerald-900/10 border dark:border-emerald-800/30 p-5 rounded-3xl flex justify-between items-center group transition-all print:border-gray-200 print:bg-white print:rounded-none print:border-b print:p-4">
                           <div className="flex-1">
-                            <p className="text-xs font-black text-emerald-950 dark:text-white uppercase leading-tight">{item.name}</p>
+                            <div className="flex items-center gap-3">
+                               <p className="text-xs font-black text-emerald-950 dark:text-white uppercase leading-tight">{item.name}</p>
+                               <span className={`px-2 py-0.5 rounded text-[7px] font-black uppercase ${SITUATION_CONFIG[item.situation].bg} ${SITUATION_CONFIG[item.situation].text} border border-current`}>
+                                {SITUATION_CONFIG[item.situation].label}
+                              </span>
+                            </div>
                             
                             {/* Visual simplificado para CIPA e BRIGADA conforme solicitado */}
                             {(detailModal.type === 'CIPEROS' || detailModal.type === 'BRIGADISTAS') ? (

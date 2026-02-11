@@ -1,5 +1,5 @@
 
-import { NRCourse } from './types';
+import { NRCourse, EmployeeSituation } from './types';
 
 export const NR_COURSES: NRCourse[] = [
   { 
@@ -135,6 +135,12 @@ export const STATUS_CONFIG = {
   EXPIRING: { label: 'Vencendo (60 dias)', color: 'bg-yellow-500', text: 'text-yellow-700', bg: 'bg-yellow-50' },
   EXPIRED: { label: 'Vencido', color: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50' },
   NOT_TRAINED: { label: 'Não Capacitado', color: 'bg-gray-400', text: 'text-gray-600', bg: 'bg-gray-100' },
+};
+
+export const SITUATION_CONFIG: Record<EmployeeSituation, { label: string, color: string, bg: string, text: string }> = {
+  ATIVO: { label: 'ATIVO', color: 'bg-green-500', bg: 'bg-green-50', text: 'text-green-700' },
+  AFASTADO: { label: 'AFASTADO', color: 'bg-yellow-500', bg: 'bg-yellow-50', text: 'text-yellow-700' },
+  DEMITIDO: { label: 'DEMITIDO', color: 'bg-red-500', bg: 'bg-red-50', text: 'text-red-700' }
 };
 
 export const DEPT_COLORS: string[] = [
