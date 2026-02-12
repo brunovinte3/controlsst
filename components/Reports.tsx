@@ -48,6 +48,17 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
     return result;
   }, [employees, filters]);
 
+  // Estatísticas Dinâmicas do Relatório
+  const stats = useMemo(() => {
+    const uniqueEmployees = new Set(reportData.map(item => item.employee.registration)).size;
+    const totalRecords = reportData.length;
+    const valid = reportData.filter(item => item.record.status === 'VALID').length;
+    const expiring = reportData.filter(item => item.record.status === 'EXPIRING').length;
+    const expired = reportData.filter(item => item.record.status === 'EXPIRED').length;
+
+    return { uniqueEmployees, totalRecords, valid, expiring, expired };
+  }, [reportData]);
+
   return (
     <div className="space-y-6 pb-20 animate-fadeIn print:pb-0 print:space-y-0">
       <div className="flex justify-between items-center no-print">
@@ -116,6 +127,30 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
         </div>
       </div>
 
+      {/* BARRA DE RESUMO ESTATÍSTICO */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4 no-print">
+        <div className="bg-white p-5 rounded-3xl border border-emerald-100 flex flex-col justify-center shadow-sm">
+          <p className="text-[8px] font-black text-emerald-800/40 uppercase tracking-widest">Funcionários</p>
+          <p className="text-xl font-black text-emerald-950">{stats.uniqueEmployees}</p>
+        </div>
+        <div className="bg-white p-5 rounded-3xl border border-emerald-100 flex flex-col justify-center shadow-sm">
+          <p className="text-[8px] font-black text-emerald-800/40 uppercase tracking-widest">Total Registros</p>
+          <p className="text-xl font-black text-emerald-950">{stats.totalRecords}</p>
+        </div>
+        <div className="bg-white p-5 rounded-3xl border border-emerald-100 flex flex-col justify-center shadow-sm border-l-4 border-l-green-500">
+          <p className="text-[8px] font-black text-emerald-800/40 uppercase tracking-widest">Válidos</p>
+          <p className="text-xl font-black text-green-600">{stats.valid}</p>
+        </div>
+        <div className="bg-white p-5 rounded-3xl border border-emerald-100 flex flex-col justify-center shadow-sm border-l-4 border-l-amber-500">
+          <p className="text-[8px] font-black text-emerald-800/40 uppercase tracking-widest">Vencendo</p>
+          <p className="text-xl font-black text-amber-500">{stats.expiring}</p>
+        </div>
+        <div className="bg-white p-5 rounded-3xl border border-emerald-100 flex flex-col justify-center shadow-sm border-l-4 border-l-red-500">
+          <p className="text-[8px] font-black text-emerald-800/40 uppercase tracking-widest">Vencidos</p>
+          <p className="text-xl font-black text-red-600">{stats.expired}</p>
+        </div>
+      </div>
+
       <div className="bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-emerald-100 print:shadow-none print:border-none print:overflow-visible">
         <table className="w-full text-left print:text-black">
           <thead className="bg-emerald-900 text-emerald-400 font-black uppercase text-[9px] tracking-[0.2em] print:bg-emerald-100 print:text-black print:border-b-2 print:border-emerald-900">
@@ -129,7 +164,7 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-emerald-50 print:divide-gray-200">
-            {reportData.map((item, idx) => (
+            {reportData.length > 0 ? reportData.map((item, idx) => (
               <tr key={idx} className="sst-table-row print:break-inside-avoid">
                 <td className="px-8 py-5 text-[9px] font-black">{item.employee.company}</td>
                 <td className="px-8 py-5">
@@ -154,7 +189,13 @@ const Reports: React.FC<ReportsProps> = ({ employees }) => {
                   </span>
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan={6} className="px-8 py-20 text-center">
+                  <p className="text-gray-400 font-black uppercase text-xs tracking-widest">Nenhum registro encontrado para os filtros aplicados</p>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
