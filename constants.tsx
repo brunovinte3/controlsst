@@ -52,6 +52,13 @@ export const NR_COURSES: NRCourse[] = [
     description: 'Normas de segurança para operação e manutenção de caldeiras a vapor.' 
   },
   { 
+    id: 'NR18', 
+    name: 'NR 18 - Construção', 
+    validityYears: 2, 
+    workload: '4h a 16h', 
+    description: 'Condições e Meio Ambiente de Trabalho na Indústria da Construção. Diretrizes de ordem administrativa, de planejamento e de organização.' 
+  },
+  { 
     id: 'NR20', 
     name: 'NR 20 - Inflamáveis', 
     validityYears: 1, 
